@@ -1,0 +1,78 @@
+package de.saar.minecraft.communication;
+
+import de.saar.minecraft.broker.BrokerGrpc;
+import de.saar.minecraft.broker.GameData;
+import de.saar.minecraft.shared.GameId;
+import io.grpc.ManagedChannel;
+import io.grpc.ManagedChannelBuilder;
+import io.grpc.StatusRuntimeException;
+
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.Random;
+import java.util.concurrent.TimeUnit;
+
+public class MinecraftClient {
+
+    private final ManagedChannel channel;
+    private BrokerGrpc.BrokerBlockingStub blockingStub;
+    private BrokerGrpc.BrokerStub nonblockingStub;
+
+    private Random random = new Random();
+    //private TestHelper testHelper;
+
+    /**
+     * Construct client connecting to Broker at {@code host:port}.
+     */
+    public MinecraftClient(String host, int port) {
+        this(ManagedChannelBuilder.forAddress(host, port).usePlaintext().build());
+        // TODO: .build() here or change signature of next method to public RouteGuideClient(ManagedChannelBuilder<?> channelBuilder)
+    }
+
+    /**
+     * Construct client for accessing Broker using the existing channel.
+     */
+    MinecraftClient(ManagedChannel channel) {
+        System.out.println("In Channel constructor of Minecraft client");
+        System.out.println(channel.toString());
+        this.channel = channel;
+        blockingStub = BrokerGrpc.newBlockingStub(channel);
+        nonblockingStub = BrokerGrpc.newStub(channel);
+    }
+
+    public void shutdown() throws InterruptedException {
+        channel.shutdown().awaitTermination(5, TimeUnit.SECONDS);
+    }
+
+    /**
+     * Registers a game with the matchmaker. Returns a unique game ID for this game.
+     */
+    public int registerGame(String playerName) {
+
+        // TODO: what is the correct host? localhost
+        String hostname = "localhost";
+        try {
+            hostname = InetAddress.getLocalHost().getHostName();
+        } catch (UnknownHostException e) {
+        }
+
+        GameData mGameInfo = GameData.newBuilder().setClientAddress(hostname).setPlayerName(playerName)
+                .build();
+
+        GameId mGameId;
+        try {
+            mGameId = blockingStub.startGame(mGameInfo);
+        } catch (StatusRuntimeException e) {
+            System.err.println("RPC failed: " + e.getStatus());
+            return -1;
+        }
+
+        return mGameId.getId();
+    }
+
+    public void finishGame(int gameId) {
+        GameId mGameId = GameId.newBuilder().setId(gameId).build();
+        blockingStub.endGame(mGameId);
+    }
+
+}

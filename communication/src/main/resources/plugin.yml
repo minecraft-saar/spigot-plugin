@@ -1,0 +1,4 @@
+main: de.saar.minecraft.communication.CommunicationPlugin
+name: CommunicationPlugin
+version: 1.0.0
+description: Connects the minecraft server to the broker
