@@ -3,12 +3,15 @@ package de.saar.minecraft.communication;
 import de.saar.minecraft.broker.BrokerGrpc;
 import de.saar.minecraft.broker.GameData;
 import de.saar.minecraft.shared.GameId;
+import de.saar.minecraft.shared.StatusMessage;
+import de.saar.minecraft.shared.StatusMessageOrBuilder;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.StatusRuntimeException;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.HashMap;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
@@ -19,7 +22,7 @@ public class MinecraftClient {
     private BrokerGrpc.BrokerStub nonblockingStub;
 
     private Random random = new Random();
-    //private TestHelper testHelper;
+    HashMap<String, Integer> activeGames;
 
     /**
      * Construct client connecting to Broker at {@code host:port}.
@@ -27,6 +30,7 @@ public class MinecraftClient {
     public MinecraftClient(String host, int port) {
         this(ManagedChannelBuilder.forAddress(host, port).usePlaintext().build());
         // TODO: .build() here or change signature of next method to public RouteGuideClient(ManagedChannelBuilder<?> channelBuilder)
+        activeGames = new HashMap();
     }
 
     /**
@@ -45,7 +49,7 @@ public class MinecraftClient {
     }
 
     /**
-     * Registers a game with the matchmaker. Returns a unique game ID for this game.
+     * Registers a game with the broker. Returns a unique game ID for this game.
      */
     public int registerGame(String playerName) {
 
@@ -67,12 +71,27 @@ public class MinecraftClient {
             return -1;
         }
 
+        // remember active games
+        activeGames.put(playerName, mGameId.getId());
         return mGameId.getId();
     }
 
     public void finishGame(int gameId) {
+        activeGames.remove(gameId);
         GameId mGameId = GameId.newBuilder().setId(gameId).build();
         blockingStub.endGame(mGameId);
     }
+
+    public void sendPlayerPosition(int gameId, int x, int y, int z){
+        GameId mGameId = GameId.newBuilder().setId(gameId).build();
+        StatusMessage mMessage = StatusMessage.newBuilder().setGameId(gameId).setX(x).setY(y).setZ(z).build();
+        blockingStub.handleStatusInformation(mMessage);
+    }
+
+    int getGameIdForPlayer(String playerName){
+        return this.activeGames.get(playerName);
+    }
+
+
 
 }

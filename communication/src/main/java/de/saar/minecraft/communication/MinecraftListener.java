@@ -32,8 +32,9 @@ public class MinecraftListener implements Listener {
 
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent event){
-        // TODO: get gameID
-        // client.finishGame();
+        event.getQuitMessage();
+        int gameId = client.getGameIdForPlayer(event.getPlayer().getName());  // TODO: which of the player names?
+        client.finishGame(gameId);
     }
 
     @EventHandler
