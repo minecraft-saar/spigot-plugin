@@ -79,7 +79,9 @@ public class MinecraftClient {
     }
 
     public void finishGame(int gameId) {
-        activeGames.remove(gameId);
+        activeGames.values().remove(gameId);
+        System.out.format("Removed player %d", gameId);
+        System.out.println(activeGames.toString());
         GameId mGameId = GameId.newBuilder().setId(gameId).build();
         blockingStub.endGame(mGameId);
     }
@@ -100,6 +102,10 @@ public class MinecraftClient {
 
     int getGameIdForPlayer(String playerName){
         return this.activeGames.get(playerName);
+    }
+
+    HashMap<String, Integer> getActiveGames(){
+        return this.activeGames;
     }
 
 //    public void receiveTextMessage(){

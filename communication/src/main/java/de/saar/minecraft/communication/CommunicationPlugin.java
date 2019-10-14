@@ -5,6 +5,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitScheduler;
 import org.bukkit.Location;
 
+import java.util.HashMap;
 import java.util.Map;
 
 public class CommunicationPlugin extends JavaPlugin{
@@ -40,7 +41,10 @@ public class CommunicationPlugin extends JavaPlugin{
     }
 
     public void getAllPlayerPositions(){
-        for (Map.Entry<String, Integer> entry : client.activeGames.entrySet()){
+        System.out.println( client.activeGames.entrySet().toString());
+        System.out.println( client.activeGames.entrySet().size());
+        HashMap<String, Integer> games = client.getActiveGames();
+        for (Map.Entry<String, Integer> entry : games.entrySet()){
             String playerName = entry.getKey();
             int gameId = entry.getValue();
             Location playerLocation = getServer().getPlayer(playerName).getLocation();
