@@ -5,6 +5,7 @@ import de.saar.minecraft.broker.GameData;
 import de.saar.minecraft.shared.GameId;
 import de.saar.minecraft.shared.StatusMessage;
 import de.saar.minecraft.shared.StatusMessageOrBuilder;
+import de.saar.minecraft.shared.TextMessage;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.StatusRuntimeException;
@@ -12,6 +13,7 @@ import io.grpc.StatusRuntimeException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
@@ -82,15 +84,27 @@ public class MinecraftClient {
         blockingStub.endGame(mGameId);
     }
 
-    public void sendPlayerPosition(int gameId, int x, int y, int z){
+    public String sendPlayerPosition(int gameId, int x, int y, int z){
         GameId mGameId = GameId.newBuilder().setId(gameId).build();
-        StatusMessage mMessage = StatusMessage.newBuilder().setGameId(gameId).setX(x).setY(y).setZ(z).build();
-        blockingStub.handleStatusInformation(mMessage);
+        StatusMessage position = StatusMessage.newBuilder().setGameId(gameId).setX(x).setY(y).setZ(z).build();
+        Iterator<TextMessage> messageStream = blockingStub.handleStatusInformation(position);
+        String result = "";
+        for (Iterator<TextMessage> it = messageStream; it.hasNext(); ) {
+            TextMessage m = it.next();
+            System.out.println(m.getGameId());
+            System.out.println(m.getText());
+            result += m.getText();
+        }
+        return result;
     }
 
     int getGameIdForPlayer(String playerName){
         return this.activeGames.get(playerName);
     }
+
+//    public void receiveTextMessage(){
+//        blockingStub.
+//    }
 
 
 

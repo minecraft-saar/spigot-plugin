@@ -1,5 +1,6 @@
 package de.saar.minecraft.communication;
 
+import org.bukkit.World;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitScheduler;
 import org.bukkit.Location;
@@ -22,7 +23,7 @@ public class CommunicationPlugin extends JavaPlugin{
         scheduler.scheduleSyncRepeatingTask(this, new Runnable() {
             @Override
             public void run() {
-                getAllPlayerPostions();
+                getAllPlayerPositions();
             }
         }, 0L, 20L);  // One tick happens usually every 0.05 seconds, set later to 2L
     }
@@ -38,7 +39,7 @@ public class CommunicationPlugin extends JavaPlugin{
         return playerLocation;
     }
 
-    public void getAllPlayerPostions(){
+    public void getAllPlayerPositions(){
         for (Map.Entry<String, Integer> entry : client.activeGames.entrySet()){
             String playerName = entry.getKey();
             int gameId = entry.getValue();
@@ -46,8 +47,11 @@ public class CommunicationPlugin extends JavaPlugin{
             int xPos = (int)Math.round(playerLocation.getX());
             int yPos = (int)Math.round(playerLocation.getY());
             int zPos = (int)Math.round(playerLocation.getZ());
-            System.out.format("Player at position %d - %d - %d ", xPos, yPos, zPos );
-            client.sendPlayerPosition(gameId, xPos, yPos, zPos);
+            //System.out.format("Player at position %d - %d - %d ", xPos, yPos, zPos );
+            String returnMessage = client.sendPlayerPosition(gameId, xPos, yPos, zPos);
+            getServer().getPlayer(playerName).sendMessage(returnMessage);  //alternativ: sendRawMessage
         }
     }
+
+
 }
