@@ -13,6 +13,7 @@ repositories {
     mavenCentral()
     mavenLocal()
     maven{url 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/'}
+    maven { url 'https://jitpack.io' }
 }
 
 dependencies {
@@ -20,9 +21,5 @@ dependencies {
     implementation group: 'org.spigotmc', name: 'spigot-api', version: '1.14.4-R0.1-SNAPSHOT'
     implementation "com.google.protobuf:protobuf-java:3.9.0"
     implementation "io.grpc:grpc-all:1.23.0"
-    //implementation group: 'de.saar.minecraft', name: 'infrastructure', version: '95b6127'
-    //implementation files('/home/ca/Documents/Hiwi_Minecraft/infrastructure/build/libs/infrastructure-0.1.0-SNAPSHOT-all.jar')
-    implementation files('/home/ca/Documents/Hiwi_Minecraft/infrastructure/broker/build/libs/broker-0.1.0-SNAPSHOT.jar',
-            '/home/ca/Documents/Hiwi_Minecraft/infrastructure/architect/build/libs/architect-0.1.0-SNAPSHOT.jar',
-            '/home/ca/Documents/Hiwi_Minecraft/infrastructure/networking/build/libs/networking-0.1.0-SNAPSHOT.jar')
+    compile 'com.github.minecraft-saar:infrastructure:master-SNAPSHOT'
 }
