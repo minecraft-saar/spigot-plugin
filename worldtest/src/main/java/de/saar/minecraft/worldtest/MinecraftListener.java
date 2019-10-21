@@ -1,4 +1,4 @@
-package de.saar.minecraft.communication;
+package de.saar.minecraft.worldtest;
 
 import org.bukkit.*;
 import org.bukkit.event.EventHandler;
@@ -9,39 +9,37 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.weather.WeatherChangeEvent;
 import org.bukkit.event.world.StructureGrowEvent;
+import org.bukkit.event.world.WorldInitEvent;
 import org.bukkit.event.world.WorldLoadEvent;
+import org.bukkit.event.world.WorldSaveEvent;
+
 
 import java.util.HashMap;
 
-public class MinecraftListener implements Listener {
 
-    MinecraftClient client;
+public class MinecraftListener implements Listener {
     WorldCreator creator;
     World nextWorld;  // Preloaded world for the next joining player
 
     HashMap<String, World> activeWorlds = new HashMap<String, World>();
 
-    MinecraftListener(MinecraftClient client) {
+    public MinecraftListener(){
         super();
-        if (client == null){
-            throw new RuntimeException("No client was passed to the Listener");
-        }
-        this.client = client;
 
         creator = new WorldCreator("playerworld_0");
         creator.generator(new FlatChunkGenerator());
         creator.generateStructures(false);
         nextWorld = creator.createWorld();
         prepareWorld(nextWorld);
+
+
     }
 
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
         String playerName = event.getPlayer().getDisplayName();
-        client.registerGame(playerName);
-        Bukkit.broadcastMessage("Welcome to the server, " + playerName);
+        System.out.println("First world " + event.getPlayer().getWorld().getName());
 
-        // Teleport player to own world
         Location teleportLocation = nextWorld.getSpawnLocation();
         boolean worked = event.getPlayer().teleport(teleportLocation);
         System.out.format("Teleportation worked %b", worked);
@@ -59,25 +57,21 @@ public class MinecraftListener implements Listener {
         nextWorld = creator.createWorld();
     }
 
-    /**
-     * Sets all world settings to peaceful
-     * @param world
-     */
     private void prepareWorld(World world){
         world.setThundering(false);
         world.setSpawnFlags(false, false);
         world.setDifficulty(Difficulty.PEACEFUL);
     }
 
+
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent event){
         event.getQuitMessage();
-        int gameId = client.getGameIdForPlayer(event.getPlayer().getName());  // TODO: which of the player names?
-        client.finishGame(gameId);
     }
 
     @EventHandler
     public void onBlockPlaced(BlockPlaceEvent event){
+
 
     }
 
@@ -85,6 +79,17 @@ public class MinecraftListener implements Listener {
     public void onBlockDestroyed(BlockDamageEvent event){
 
     }
+
+//    @EventHandler
+//    public void onWorldInitEvent​(WorldInitEvent event){
+//        // disable thunder
+//        World world = event.getWorld();
+//        world.setThundering(false);
+//        world.setSpawnFlags(false, false);
+//        world.setDifficulty(Difficulty.PEACEFUL);
+//        Bukkit.broadcastMessage("World was initialized " + world.getName());
+//        System.out.println("World was initialized " + world.getName());
+//    }
 
     @EventHandler
     public void onWorldLoadEvent​(WorldLoadEvent event){
@@ -96,7 +101,7 @@ public class MinecraftListener implements Listener {
 
     @EventHandler
     public void onWeatherChange(WeatherChangeEvent event){
-        if (event.toWeatherState()) {  // would change to raining, thunder is already disabled
+        if (event.toWeatherState()) {  // would change to raining, TODO: does thunder count as raining?
             event.setCancelled(true);
         }
 
@@ -108,4 +113,17 @@ public class MinecraftListener implements Listener {
     public void onStructureGrow(StructureGrowEvent event){
         event.setCancelled(true);
     }
+
+    @EventHandler
+    public void onWorldSave(WorldSaveEvent event){
+        if (event.getWorld().getName().startsWith("playerworld_")){
+            // TODO cancel
+            System.out.println(event.toString() + " should be cancelled");
+        }
+    }
+
+    private void buildCube(Location location){
+        location.getBlock().setType(Material.GLASS);
+    }
 }
+
