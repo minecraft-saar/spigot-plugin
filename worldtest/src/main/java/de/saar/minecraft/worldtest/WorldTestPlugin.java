@@ -1,8 +1,11 @@
 package de.saar.minecraft.worldtest;
 
+import org.bukkit.entity.Player;
 import org.bukkit.generator.ChunkGenerator;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitScheduler;
+
+import java.util.Collection;
 
 public class WorldTestPlugin extends JavaPlugin{
 
@@ -15,9 +18,9 @@ public class WorldTestPlugin extends JavaPlugin{
         scheduler.scheduleSyncRepeatingTask(this, new Runnable() {
             @Override
             public void run() {
-//                    getAllPlayerPositions();
+                resetTime();
             }
-        }, 0L, 20L);  // One tick happens usually every 0.05 seconds, set later to 2L
+        }, 0L, 1000L);  // One tick happens usually every 0.05 seconds, set later to 2L
     }
 
     // Fired when plugin is disabled
@@ -32,4 +35,13 @@ public class WorldTestPlugin extends JavaPlugin{
     }
 
 
+    private void resetTime(){
+        Collection<Player> players = (Collection<Player>) getServer().getOnlinePlayers();
+        for (Player p: players){
+            long time = p.getWorld().getTime();
+            if (time < 7000 || time > 17000) {  // sunset begins at 17:37
+                p.getWorld().setTime(7000);
+            }
+        }
+    }
     }
