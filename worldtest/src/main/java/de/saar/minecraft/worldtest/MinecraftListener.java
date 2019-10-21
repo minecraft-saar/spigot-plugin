@@ -1,6 +1,7 @@
 package de.saar.minecraft.worldtest;
 
 import org.bukkit.*;
+import org.bukkit.block.Block;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockDamageEvent;
@@ -71,8 +72,15 @@ public class MinecraftListener implements Listener {
 
     @EventHandler
     public void onBlockPlaced(BlockPlaceEvent event){
-
-
+        Block b = event.getBlock();
+        Material m = event.getBlock().getType();
+        String name = m.name();
+        int number = m.ordinal();
+        System.out.println("Block was placed with name " + name);
+        System.out.format("Block was placed with number %d", number);
+        System.out.println("b.getState().getData().toString() " + b.getState().getData().toString());
+        System.out.print("m.toString() " + m.toString());
+        System.out.println("m.data " + m.data);
     }
 
     @EventHandler

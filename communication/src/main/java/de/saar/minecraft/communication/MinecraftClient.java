@@ -4,8 +4,9 @@ import de.saar.minecraft.broker.BrokerGrpc;
 import de.saar.minecraft.broker.GameData;
 import de.saar.minecraft.shared.GameId;
 import de.saar.minecraft.shared.StatusMessage;
-import de.saar.minecraft.shared.StatusMessageOrBuilder;
 import de.saar.minecraft.shared.TextMessage;
+import de.saar.minecraft.shared.BlockDestroyedMessage;
+import de.saar.minecraft.shared.BlockPlacedMessage;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.StatusRuntimeException;
@@ -83,16 +84,16 @@ public class MinecraftClient {
         System.out.format("Removed player %d", gameId);
         System.out.println(activeGames.toString());
         GameId mGameId = GameId.newBuilder().setId(gameId).build();
-        blockingStub.endGame(mGameId);
+        blockingStub.endGame(mGameId);  // TODO: what to do with the void return
     }
 
     public String sendPlayerPosition(int gameId, int x, int y, int z){
-        GameId mGameId = GameId.newBuilder().setId(gameId).build();
+        GameId mGameId = GameId.newBuilder().setId(gameId).build();  // TODO: why construct id?
         StatusMessage position = StatusMessage.newBuilder().setGameId(gameId).setX(x).setY(y).setZ(z).build();
         Iterator<TextMessage> messageStream = blockingStub.handleStatusInformation(position);
         String result = "";
-        for (Iterator<TextMessage> it = messageStream; it.hasNext(); ) {
-            TextMessage m = it.next();
+        for (; messageStream.hasNext(); ) {
+            TextMessage m = messageStream.next();
             System.out.println(m.getGameId());
             System.out.println(m.getText());
             result += m.getText();
@@ -111,6 +112,28 @@ public class MinecraftClient {
 //    public void receiveTextMessage(){
 //        blockingStub.
 //    }
+
+    public String sendBlockPlaced(int gameId, int x, int y, int z, int type){
+        BlockPlacedMessage message = BlockPlacedMessage.newBuilder().setGameId(gameId).setX(x).setZ(z).setType(type).build();
+        Iterator<TextMessage> messageStream = blockingStub.handleBlockPlaced(message);
+        String result = "";
+        for (Iterator<TextMessage> it = messageStream; it.hasNext(); ) {
+            TextMessage m = it.next();
+            result += m.getText();
+        }
+        return result;
+    }
+
+    public String sendBlockDestroyed(int gameId, int x, int y, int z, int type){
+        BlockDestroyedMessage message = BlockDestroyedMessage.newBuilder().setGameId(gameId).setX(x).setZ(z).setType(type).build();
+        Iterator<TextMessage> messageStream = blockingStub.handleBlockDestroyed(message);
+        String result = "";
+        for (Iterator<TextMessage> it = messageStream; it.hasNext(); ) {
+            TextMessage m = it.next();
+            result += m.getText();
+        }
+        return result;
+    }
 
 
 

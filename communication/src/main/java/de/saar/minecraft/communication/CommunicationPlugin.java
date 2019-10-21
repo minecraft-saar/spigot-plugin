@@ -53,8 +53,8 @@ public class CommunicationPlugin extends JavaPlugin{
     }
 
     public void getAllPlayerPositions(){
-        System.out.println( client.activeGames.entrySet().toString());
-        System.out.println( client.activeGames.entrySet().size());
+//        System.out.println( client.activeGames.entrySet().toString());
+//        System.out.println( client.activeGames.entrySet().size());
         HashMap<String, Integer> games = client.getActiveGames();
         for (Map.Entry<String, Integer> entry : games.entrySet()){
             String playerName = entry.getKey();
