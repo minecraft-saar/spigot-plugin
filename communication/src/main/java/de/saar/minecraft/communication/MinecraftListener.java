@@ -1,6 +1,8 @@
 package de.saar.minecraft.communication;
 
 import org.bukkit.*;
+import org.bukkit.block.Block;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockDamageEvent;
@@ -78,12 +80,24 @@ public class MinecraftListener implements Listener {
 
     @EventHandler
     public void onBlockPlaced(BlockPlaceEvent event){
+        Block block = event.getBlock();
+        System.out.println("Block was placed with name " + block.getType().name() + " " + block.getType().ordinal());
 
+        Player player = event.getPlayer();
+        int gameId = client.getGameIdForPlayer(player.getName());
+        String message = client.sendBlockPlaced(gameId, block.getX(), block.getY(), block.getZ(), block.getType().ordinal());
+        player.sendMessage(message);
     }
 
     @EventHandler
     public void onBlockDestroyed(BlockDamageEvent event){
+        Block block = event.getBlock();
+        System.out.println("Block was placed with name " + block.getType().name() + " " + block.getType().ordinal());
 
+        Player player = event.getPlayer();
+        int gameId = client.getGameIdForPlayer(player.getName());
+        String message = client.sendBlockDestroyed(gameId, block.getX(), block.getY(), block.getZ(), block.getType().ordinal());
+        player.sendMessage(message);
     }
 
     @EventHandler
