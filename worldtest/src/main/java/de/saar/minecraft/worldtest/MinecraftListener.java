@@ -93,7 +93,6 @@ public class MinecraftListener implements Listener {
 
     @EventHandler
     public void onWorldLoadEvent​(WorldLoadEvent event){
-        // disable thunder
         World world = event.getWorld();
         prepareWorld(world);
         Bukkit.broadcastMessage("World loaded " + world.getName());

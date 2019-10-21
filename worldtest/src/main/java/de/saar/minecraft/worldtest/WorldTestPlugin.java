@@ -20,7 +20,7 @@ public class WorldTestPlugin extends JavaPlugin{
             public void run() {
                 resetTime();
             }
-        }, 0L, 1000L);  // One tick happens usually every 0.05 seconds, set later to 2L
+        }, 0L, 1000L);
     }
 
     // Fired when plugin is disabled
