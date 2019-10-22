@@ -5,8 +5,10 @@ import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockDamageEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.player.PlayerGameModeChangeEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.weather.WeatherChangeEvent;
@@ -69,6 +71,11 @@ public class MinecraftListener implements Listener {
         world.setThundering(false);
         world.setSpawnFlags(false, false);
         world.setDifficulty(Difficulty.PEACEFUL);
+        world.setTime(8000);
+        world.setGameRule(GameRule.DO_DAYLIGHT_CYCLE, false);
+        world.setGameRule(GameRule.DO_MOB_SPAWNING, false);
+        world.setGameRule(GameRule.DO_WEATHER_CYCLE, false);
+        world.setGameRule(GameRule.NATURAL_REGENERATION, false);
     }
 
     @EventHandler
@@ -81,8 +88,6 @@ public class MinecraftListener implements Listener {
     @EventHandler
     public void onBlockPlaced(BlockPlaceEvent event){
         Block block = event.getBlock();
-        System.out.println("Block was placed with name " + block.getType().name() + " " + block.getType().ordinal());
-
         Player player = event.getPlayer();
         int gameId = client.getGameIdForPlayer(player.getName());
         String message = client.sendBlockPlaced(gameId, block.getX(), block.getY(), block.getZ(), block.getType().ordinal());
@@ -90,14 +95,24 @@ public class MinecraftListener implements Listener {
     }
 
     @EventHandler
-    public void onBlockDestroyed(BlockDamageEvent event){
+    public void onBlockDestroyed(BlockBreakEvent event){
         Block block = event.getBlock();
-        System.out.println("Block was placed with name " + block.getType().name() + " " + block.getType().ordinal());
+        System.out.println("Block was destroyed with name " + block.getType().name() + " " + block.getType().ordinal());
 
         Player player = event.getPlayer();
         int gameId = client.getGameIdForPlayer(player.getName());
         String message = client.sendBlockDestroyed(gameId, block.getX(), block.getY(), block.getZ(), block.getType().ordinal());
-        player.sendMessage(message);
+        System.out.println(message);
+        String[] parts = message.split(":");
+        int id = Integer.parseInt(parts[1]);
+        Material m = Material.values()[id];
+        player.sendMessage(parts[0] + m.toString());
+    }
+
+    // TODO: what if block is not broken but just damaged?
+    @EventHandler
+    public void onBlockDamaged(BlockDamageEvent event){
+        event.setCancelled(true);
     }
 
     @EventHandler
@@ -110,16 +125,19 @@ public class MinecraftListener implements Listener {
 
     @EventHandler
     public void onWeatherChange(WeatherChangeEvent event){
+        System.out.println("Attempted Weather Change to " + event.toWeatherState());
         if (event.toWeatherState()) {  // would change to raining, thunder is already disabled
             event.setCancelled(true);
         }
-
-        //event.getWorld().setWeatherDuration(0);
-        //
     }
 
     @EventHandler
     public void onStructureGrow(StructureGrowEvent event){
         event.setCancelled(true);
+    }
+
+    @EventHandler
+    public void onPlayerGameModeChangeEvent (PlayerGameModeChangeEvent event){
+        event.getPlayer().setGameMode(GameMode.CREATIVE);
     }
 }

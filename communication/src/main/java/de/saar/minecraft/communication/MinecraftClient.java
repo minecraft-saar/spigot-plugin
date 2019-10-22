@@ -25,7 +25,7 @@ public class MinecraftClient {
     private BrokerGrpc.BrokerStub nonblockingStub;
 
     private Random random = new Random();
-    HashMap<String, Integer> activeGames;
+    private HashMap<String, Integer> activeGames;
 
     /**
      * Construct client connecting to Broker at {@code host:port}.
@@ -33,7 +33,7 @@ public class MinecraftClient {
     public MinecraftClient(String host, int port) {
         this(ManagedChannelBuilder.forAddress(host, port).usePlaintext().build());
         // TODO: .build() here or change signature of next method to public RouteGuideClient(ManagedChannelBuilder<?> channelBuilder)
-        activeGames = new HashMap();
+        activeGames = new HashMap<>();
     }
 
     /**
@@ -55,12 +55,12 @@ public class MinecraftClient {
      * Registers a game with the broker. Returns a unique game ID for this game.
      */
     public int registerGame(String playerName) {
-
-        // TODO: what is the correct host? localhost
         String hostname = "localhost";
         try {
             hostname = InetAddress.getLocalHost().getHostName();
         } catch (UnknownHostException e) {
+            System.err.println("Hostname not found: " + e.getMessage());
+            return -1;
         }
 
         GameData mGameInfo = GameData.newBuilder().setClientAddress(hostname).setPlayerName(playerName)
@@ -109,16 +109,12 @@ public class MinecraftClient {
         return this.activeGames;
     }
 
-//    public void receiveTextMessage(){
-//        blockingStub.
-//    }
-
     public String sendBlockPlaced(int gameId, int x, int y, int z, int type){
         BlockPlacedMessage message = BlockPlacedMessage.newBuilder().setGameId(gameId).setX(x).setZ(z).setType(type).build();
         Iterator<TextMessage> messageStream = blockingStub.handleBlockPlaced(message);
         String result = "";
-        for (Iterator<TextMessage> it = messageStream; it.hasNext(); ) {
-            TextMessage m = it.next();
+        for (; messageStream.hasNext(); ) {
+            TextMessage m = messageStream.next();
             result += m.getText();
         }
         return result;
@@ -128,13 +124,12 @@ public class MinecraftClient {
         BlockDestroyedMessage message = BlockDestroyedMessage.newBuilder().setGameId(gameId).setX(x).setZ(z).setType(type).build();
         Iterator<TextMessage> messageStream = blockingStub.handleBlockDestroyed(message);
         String result = "";
-        for (Iterator<TextMessage> it = messageStream; it.hasNext(); ) {
-            TextMessage m = it.next();
+        for (; messageStream.hasNext(); ) {
+            TextMessage m = messageStream.next();
             result += m.getText();
         }
         return result;
     }
-
 
 
 }

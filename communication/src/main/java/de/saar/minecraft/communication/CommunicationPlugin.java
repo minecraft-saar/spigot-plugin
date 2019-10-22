@@ -29,27 +29,13 @@ public class CommunicationPlugin extends JavaPlugin{
             public void run() {
                 getAllPlayerPositions();
             }
-        }, 0L, 20L);  // One tick happens usually every 0.05 seconds, set later to 2L
-
-        // always day
-        BukkitScheduler timeScheduler = getServer().getScheduler();
-        timeScheduler.scheduleSyncRepeatingTask(this, new Runnable() {
-            @Override
-            public void run() {
-                resetTime();
-            }
-        }, 0L, 1000L);
+        }, 0L, 200L);  // One tick happens usually every 0.05 seconds, set later to 2L
     }
 
     // Fired when plugin is disabled
     @Override
     public void onDisable() {
 
-    }
-
-    public Location getPlayerPosition(String playerName){
-        Location playerLocation = getServer().getPlayer(playerName).getLocation();
-        return playerLocation;
     }
 
     public void getAllPlayerPositions(){
@@ -73,17 +59,5 @@ public class CommunicationPlugin extends JavaPlugin{
     public ChunkGenerator getDefaultWorldGenerator(String worldName, String id) {
         return new FlatChunkGenerator();
     }
-
-
-    private void resetTime(){
-        Collection<Player> players = (Collection<Player>) getServer().getOnlinePlayers();
-        for (Player p: players){
-            long time = p.getWorld().getTime();
-            if (time < 7000 || time > 17000) {  // sunset begins at 17:37
-                p.getWorld().setTime(7000);
-            }
-        }
-    }
-
 
 }
