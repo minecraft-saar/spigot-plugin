@@ -9,7 +9,7 @@
 5. Generate the communication plugin and copy it into `<your_server_directory>/plugins/`
 
 ## Creating plugin
-`> cd communication/`
+`> cd communication/`  
 `> ./gradlew shadowJar`
 
 then copy generated jar from `.../spigot-plugin/communication/build/libs/communication-1.0-SNAPSHOT-all.jar` to the plugin folder of the spigot server
