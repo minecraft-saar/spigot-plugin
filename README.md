@@ -1,5 +1,8 @@
 # spigot-plugin
 
+## fast default setup
+
+run ./start.sh to download and compile and everything except the Minecraft client.
 
 ## Setting up a spigot server
 1. Download `BuildTools.jar` and run it according to the instructions in [https://www.spigotmc.org/wiki/buildtools/](https://www.spigotmc.org/wiki/buildtools/)
