@@ -1,5 +1,6 @@
 package de.saar.minecraft.communication;
 
+import org.bukkit.Server;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.generator.ChunkGenerator;
@@ -39,13 +40,19 @@ public class CommunicationPlugin extends JavaPlugin{
     }
 
     public void getAllPlayerPositions(){
-//        System.out.println( client.activeGames.entrySet().toString());
-//        System.out.println( client.activeGames.entrySet().size());
+        System.out.println( client.getActiveGames().entrySet().toString());
+//        System.out.println( client.getActiveGames().entrySet().size());
         HashMap<String, Integer> games = client.getActiveGames();
         for (Map.Entry<String, Integer> entry : games.entrySet()){
             String playerName = entry.getKey();
             int gameId = entry.getValue();
-            Location playerLocation = getServer().getPlayer(playerName).getLocation();
+            Server s  = getServer();
+            Player p = s.getPlayer(playerName);
+
+            System.out.println(s.getOnlinePlayers().toString());
+            System.out.println("Player " + p.toString());
+            //Location playerLocation = getServer().getPlayer(playerName).getLocation();
+            Location playerLocation = p.getLocation();
             int xPos = (int)Math.round(playerLocation.getX());
             int yPos = (int)Math.round(playerLocation.getY());
             int zPos = (int)Math.round(playerLocation.getZ());
