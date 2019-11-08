@@ -52,6 +52,7 @@ public class MinecraftListener implements Listener {
         boolean worked = event.getPlayer().teleport(teleportLocation);
         System.out.format("Teleportation worked %b", worked);
         System.out.println("Now in world " + event.getPlayer().getWorld().getName());
+        System.out.println("Now at block type: " + teleportLocation.getBlock().getType());
 
         // Add world to active worlds
         activeWorlds.put(nextWorld.getName(), nextWorld);
@@ -62,9 +63,6 @@ public class MinecraftListener implements Listener {
         creator.generator(new FlatChunkGenerator());
         creator.generateStructures(false);
         nextWorld = creator.createWorld();
-
-        System.out.println(Material.BLUE_WOOL);
-        System.out.println(teleportLocation.getBlock().getType());
     }
 
     /**
@@ -98,13 +96,10 @@ public class MinecraftListener implements Listener {
         Player player = event.getPlayer();
         int gameId = client.getGameIdForPlayer(player.getName());
         String message = client.sendBlockPlaced(gameId, block.getX(), block.getY(), block.getZ(), block.getType().ordinal());
-        player.sendMessage(message);
-//        String[] parts = message.split(":");
-//        int id = Integer.parseInt(parts[1]);
-//        Material m = Material.values()[id];
-//        player.sendMessage(parts[0] + m.toString());
-
-        System.out.println("Biome is " + event.getPlayer().getWorld().getBiome(0,0));
+        String[] parts = message.split(":");
+        int id = Integer.parseInt(parts[1]);
+        Material m = Material.values()[id];
+        player.sendMessage(parts[0] + m.toString());
     }
 
     @EventHandler

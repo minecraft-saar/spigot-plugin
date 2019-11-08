@@ -28,6 +28,6 @@ public class FlatChunkGenerator extends ChunkGenerator {
 
     @Override
     public Location getFixedSpawnLocation(World world, Random random) {
-        return new Location(world, 0, 0, 0);
+        return new Location(world, 0, 2, 0);
     }
 }
