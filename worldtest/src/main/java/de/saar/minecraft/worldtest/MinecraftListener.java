@@ -99,6 +99,13 @@ public class MinecraftListener implements Listener {
     @EventHandler
     public void onBlockDestroyed(BlockBreakEvent event){
         Block block = event.getBlock();
+        Player player = event.getPlayer();
+        // Don't destroy the bedrock layer
+        if (block.getY() <= 1){
+            event.setCancelled(true);
+            player.sendMessage("You cannot destroy this");
+            return;
+        }
         System.out.println("Block was destroyed with name " + block.getType().name() + " " + block.getType().ordinal());
     }
 
