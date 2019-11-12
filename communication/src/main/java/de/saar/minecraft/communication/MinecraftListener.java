@@ -79,6 +79,10 @@ public class MinecraftListener implements Listener {
         world.setGameRule(GameRule.DO_WEATHER_CYCLE, false);
         world.setGameRule(GameRule.NATURAL_REGENERATION, false);
         world.setBiome(0,0, Biome.PLAINS);
+
+        // Set initial blue block as orientation for planner and NLG
+        Location anchor = new Location(world,2,2,2);
+        anchor.getBlock().setType(Material.BLUE_WOOL);
     }
 
     @EventHandler
