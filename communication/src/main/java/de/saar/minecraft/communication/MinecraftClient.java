@@ -110,7 +110,7 @@ public class MinecraftClient {
     }
 
     public String sendBlockPlaced(int gameId, int x, int y, int z, int type){
-        BlockPlacedMessage message = BlockPlacedMessage.newBuilder().setGameId(gameId).setX(x).setZ(z).setType(type).build();
+        BlockPlacedMessage message = BlockPlacedMessage.newBuilder().setGameId(gameId).setX(x).setY(y).setZ(z).setType(type).build();
         Iterator<TextMessage> messageStream = blockingStub.handleBlockPlaced(message);
         String result = "";
         for (; messageStream.hasNext(); ) {
@@ -121,7 +121,7 @@ public class MinecraftClient {
     }
 
     public String sendBlockDestroyed(int gameId, int x, int y, int z, int type){
-        BlockDestroyedMessage message = BlockDestroyedMessage.newBuilder().setGameId(gameId).setX(x).setZ(z).setType(type).build();
+        BlockDestroyedMessage message = BlockDestroyedMessage.newBuilder().setGameId(gameId).setX(x).setY(y).setZ(z).setType(type).build();
         Iterator<TextMessage> messageStream = blockingStub.handleBlockDestroyed(message);
         String result = "";
         for (; messageStream.hasNext(); ) {

@@ -40,23 +40,14 @@ public class CommunicationPlugin extends JavaPlugin{
     }
 
     public void getAllPlayerPositions(){
-        System.out.println( client.getActiveGames().entrySet().toString());
-//        System.out.println( client.getActiveGames().entrySet().size());
-        HashMap<String, Integer> games = client.getActiveGames();
-        for (Map.Entry<String, Integer> entry : games.entrySet()){
-            String playerName = entry.getKey();
-            int gameId = entry.getValue();
-            Server s  = getServer();
-            Player p = s.getPlayer(playerName);
-
-            System.out.println(s.getOnlinePlayers().toString());
-            System.out.println("Player " + p.toString());
-            //Location playerLocation = getServer().getPlayer(playerName).getLocation();
-            Location playerLocation = p.getLocation();
+        System.out.println(client.getActiveGames().toString());
+        for (Player player: getServer().getOnlinePlayers()){
+            String playerName = player.getName();
+            int gameId = client.getGameIdForPlayer(playerName);
+            Location playerLocation = player.getLocation();
             int xPos = (int)Math.round(playerLocation.getX());
             int yPos = (int)Math.round(playerLocation.getY());
             int zPos = (int)Math.round(playerLocation.getZ());
-            //System.out.format("Player at position %d - %d - %d ", xPos, yPos, zPos );
             String returnMessage = client.sendPlayerPosition(gameId, xPos, yPos, zPos);
             getServer().getPlayer(playerName).sendMessage(returnMessage);  //alternativ: sendRawMessage
         }

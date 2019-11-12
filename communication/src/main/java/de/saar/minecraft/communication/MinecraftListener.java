@@ -93,8 +93,10 @@ public class MinecraftListener implements Listener {
         Block block = event.getBlock();
         System.out.println("Block was placed with name " + block.getType().name() + " " + block.getType().ordinal());
 
+
         Player player = event.getPlayer();
         int gameId = client.getGameIdForPlayer(player.getName());
+        System.out.println(gameId + " " + block.getX() + " " + block.getY() + " " + block.getZ());
         String message = client.sendBlockPlaced(gameId, block.getX(), block.getY(), block.getZ(), block.getType().ordinal());
         String[] parts = message.split(":");
         int id = Integer.parseInt(parts[1]);
