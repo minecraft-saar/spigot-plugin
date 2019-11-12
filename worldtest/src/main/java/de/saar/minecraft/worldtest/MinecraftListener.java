@@ -1,16 +1,19 @@
 package de.saar.minecraft.worldtest;
 
 import org.bukkit.*;
+import org.bukkit.block.Biome;
 import org.bukkit.block.Block;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockDamageEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.player.PlayerGameModeChangeEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.weather.WeatherChangeEvent;
 import org.bukkit.event.world.StructureGrowEvent;
-import org.bukkit.event.world.WorldInitEvent;
 import org.bukkit.event.world.WorldLoadEvent;
 import org.bukkit.event.world.WorldSaveEvent;
 
@@ -32,7 +35,6 @@ public class MinecraftListener implements Listener {
         creator.generateStructures(false);
         nextWorld = creator.createWorld();
         prepareWorld(nextWorld);
-
 
     }
 
@@ -56,12 +58,21 @@ public class MinecraftListener implements Listener {
         creator.generator(new FlatChunkGenerator());
         creator.generateStructures(false);
         nextWorld = creator.createWorld();
+
+        System.out.println(Material.BLUE_WOOL);
+        System.out.println(teleportLocation.getBlock().getType());
     }
 
     private void prepareWorld(World world){
         world.setThundering(false);
         world.setSpawnFlags(false, false);
         world.setDifficulty(Difficulty.PEACEFUL);
+        world.setTime(8000);
+        world.setGameRule(GameRule.DO_DAYLIGHT_CYCLE, false);
+        world.setGameRule(GameRule.DO_MOB_SPAWNING, false);
+        world.setGameRule(GameRule.DO_WEATHER_CYCLE, false);
+        world.setGameRule(GameRule.NATURAL_REGENERATION, false);
+        world.setBiome(0,0, Biome.PLAINS);
     }
 
 
@@ -81,26 +92,30 @@ public class MinecraftListener implements Listener {
         System.out.println("b.getState().getData().toString() " + b.getState().getData().toString());
         System.out.print("m.toString() " + m.toString());
         System.out.println("m.data " + m.data);
+
+        System.out.println("Biome is " + event.getPlayer().getWorld().getBiome(0,0));
     }
 
     @EventHandler
-    public void onBlockDestroyed(BlockDamageEvent event){
-
+    public void onBlockDestroyed(BlockBreakEvent event){
+        Block block = event.getBlock();
+        Player player = event.getPlayer();
+        // Don't destroy the bedrock layer
+        if (block.getY() <= 1){
+            event.setCancelled(true);
+            player.sendMessage("You cannot destroy this");
+            return;
+        }
+        System.out.println("Block was destroyed with name " + block.getType().name() + " " + block.getType().ordinal());
     }
 
-//    @EventHandler
-//    public void onWorldInitEvent​(WorldInitEvent event){
-//        // disable thunder
-//        World world = event.getWorld();
-//        world.setThundering(false);
-//        world.setSpawnFlags(false, false);
-//        world.setDifficulty(Difficulty.PEACEFUL);
-//        Bukkit.broadcastMessage("World was initialized " + world.getName());
-//        System.out.println("World was initialized " + world.getName());
-//    }
+    @EventHandler
+    public void onBlockDamaged(BlockDamageEvent event){
+        event.setCancelled(true);
+    }
 
     @EventHandler
-    public void onWorldLoadEvent​(WorldLoadEvent event){
+    public void onWorldLoadEvent(WorldLoadEvent event){
         World world = event.getWorld();
         prepareWorld(world);
         Bukkit.broadcastMessage("World loaded " + world.getName());
@@ -112,14 +127,16 @@ public class MinecraftListener implements Listener {
         if (event.toWeatherState()) {  // would change to raining, TODO: does thunder count as raining?
             event.setCancelled(true);
         }
-
-        //event.getWorld().setWeatherDuration(0);
-        //
     }
 
     @EventHandler
     public void onStructureGrow(StructureGrowEvent event){
         event.setCancelled(true);
+    }
+
+    @EventHandler
+    public void onPlayerGameModeChangeEvent (PlayerGameModeChangeEvent event){
+        event.getPlayer().setGameMode(GameMode.CREATIVE);
     }
 
     @EventHandler
@@ -129,6 +146,17 @@ public class MinecraftListener implements Listener {
             System.out.println(event.toString() + " should be cancelled");
         }
     }
+
+//    @EventHandler
+//    public void onChunkLoadEvent(ChunkLoadEvent event){
+//        System.out.println("This is a ChunkLoadEvent");
+//        System.out.println("Biome " + event.getWorld().getBiome(0,0));
+//    }
+
+//    @EventHandler  // TODO: events must have a static getHandlerList method to be able to be listened to
+//    public void onAllEvents(BlockEvent event){
+//        System.out.println("There was an " + event.getEventName() + event.toString());
+//    }
 
     private void buildCube(Location location){
         location.getBlock().setType(Material.GLASS);

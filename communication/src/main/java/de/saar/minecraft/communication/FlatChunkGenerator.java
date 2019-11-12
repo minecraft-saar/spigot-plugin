@@ -6,6 +6,7 @@ package de.saar.minecraft.communication;
 
 import java.util.Random;
 
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.generator.ChunkGenerator;
@@ -19,9 +20,14 @@ public class FlatChunkGenerator extends ChunkGenerator {
 
         for (int x = 0; x < 16; x++)
             for (int z = 0; z < 16; z++) {
-                chunk.setBlock(x, 1, z, Material.GRASS);
+                chunk.setBlock(x, 1, z, Material.BEDROCK);
                 chunk.setBlock(x, 0, z, Material.BEDROCK);
             }
         return chunk;
+    }
+
+    @Override
+    public Location getFixedSpawnLocation(World world, Random random) {
+        return new Location(world, 0, 2, 0);
     }
 }

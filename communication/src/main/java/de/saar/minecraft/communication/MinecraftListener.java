@@ -1,6 +1,7 @@
 package de.saar.minecraft.communication;
 
 import org.bukkit.*;
+import org.bukkit.block.Biome;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -41,16 +42,17 @@ public class MinecraftListener implements Listener {
 
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
-        String playerName = event.getPlayer().getDisplayName();
+        Player player = event.getPlayer();
+        String playerName = player.getDisplayName();
         client.registerGame(playerName);
-        Bukkit.broadcastMessage("Welcome to the server, " + playerName);
+        player.sendMessage("Welcome to the server, " + playerName);
 
         // Teleport player to own world
         Location teleportLocation = nextWorld.getSpawnLocation();
         boolean worked = event.getPlayer().teleport(teleportLocation);
         System.out.format("Teleportation worked %b", worked);
-        System.out.println("Second world " + event.getPlayer().getWorld().getName());
-        Bukkit.broadcastMessage("Welcome to the server, " + playerName);
+        System.out.println("Now in world " + event.getPlayer().getWorld().getName());
+        System.out.println("Now at block type: " + teleportLocation.getBlock().getType());
 
         // Add world to active worlds
         activeWorlds.put(nextWorld.getName(), nextWorld);
@@ -76,6 +78,7 @@ public class MinecraftListener implements Listener {
         world.setGameRule(GameRule.DO_MOB_SPAWNING, false);
         world.setGameRule(GameRule.DO_WEATHER_CYCLE, false);
         world.setGameRule(GameRule.NATURAL_REGENERATION, false);
+        world.setBiome(0,0, Biome.PLAINS);
     }
 
     @EventHandler
@@ -88,18 +91,29 @@ public class MinecraftListener implements Listener {
     @EventHandler
     public void onBlockPlaced(BlockPlaceEvent event){
         Block block = event.getBlock();
+        System.out.println("Block was placed with name " + block.getType().name() + " " + block.getType().ordinal());
+
         Player player = event.getPlayer();
         int gameId = client.getGameIdForPlayer(player.getName());
         String message = client.sendBlockPlaced(gameId, block.getX(), block.getY(), block.getZ(), block.getType().ordinal());
-        player.sendMessage(message);
+        String[] parts = message.split(":");
+        int id = Integer.parseInt(parts[1]);
+        Material m = Material.values()[id];
+        player.sendMessage(parts[0] + m.toString());
     }
 
     @EventHandler
     public void onBlockDestroyed(BlockBreakEvent event){
         Block block = event.getBlock();
-        System.out.println("Block was destroyed with name " + block.getType().name() + " " + block.getType().ordinal());
-
         Player player = event.getPlayer();
+        // Don't destroy the bedrock layer
+        if (block.getY() <= 1){
+            event.setCancelled(true);
+            player.sendMessage("You cannot destroy this");
+            return;
+        }
+        System.out.println("Block was destroyed with name " + block.getType().name() + " " + block.getType().ordinal());
+        
         int gameId = client.getGameIdForPlayer(player.getName());
         String message = client.sendBlockDestroyed(gameId, block.getX(), block.getY(), block.getZ(), block.getType().ordinal());
         System.out.println(message);
@@ -116,10 +130,9 @@ public class MinecraftListener implements Listener {
     }
 
     @EventHandler
-    public void onWorldLoadEvent​(WorldLoadEvent event){
+    public void onWorldLoadEvent(WorldLoadEvent event){
         World world = event.getWorld();
         prepareWorld(world);
-        Bukkit.broadcastMessage("World loaded " + world.getName());
         System.out.println("World was loaded " + world.getName());
     }
 

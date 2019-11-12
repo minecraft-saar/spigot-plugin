@@ -81,7 +81,7 @@ public class MinecraftClient {
 
     public void finishGame(int gameId) {
         activeGames.values().remove(gameId);
-        System.out.format("Removed player %d", gameId);
+        System.out.println(String.format("Removed player %d", gameId));
         System.out.println(activeGames.toString());
         GameId mGameId = GameId.newBuilder().setId(gameId).build();
         blockingStub.endGame(mGameId);  // TODO: what to do with the void return
