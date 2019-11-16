@@ -13,6 +13,7 @@ import org.bukkit.event.player.PlayerGameModeChangeEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.weather.WeatherChangeEvent;
+import org.bukkit.event.world.ChunkLoadEvent;
 import org.bukkit.event.world.StructureGrowEvent;
 import org.bukkit.event.world.WorldLoadEvent;
 import org.bukkit.event.world.WorldSaveEvent;
@@ -47,7 +48,6 @@ public class MinecraftListener implements Listener {
         boolean worked = event.getPlayer().teleport(teleportLocation);
         System.out.format("Teleportation worked %b", worked);
         System.out.println("Second world " + event.getPlayer().getWorld().getName());
-        Bukkit.broadcastMessage("Welcome to the server, " + playerName);
 
         // Add world to active worlds
         activeWorlds.put(nextWorld.getName(), nextWorld);
@@ -55,6 +55,9 @@ public class MinecraftListener implements Listener {
         // Create new preloaded world for the next player
         String worldName = "playerworld_" + activeWorlds.size();
         creator = new WorldCreator(worldName);
+//        World templateWorld = event.getPlayer().getServer().getWorld("playerworld_1");
+//        System.out.println("template world " + templateWorld.toString());
+//        creator.copy(templateWorld);
         creator.generator(new FlatChunkGenerator());
         creator.generateStructures(false);
         nextWorld = creator.createWorld();
@@ -73,6 +76,21 @@ public class MinecraftListener implements Listener {
         world.setGameRule(GameRule.DO_WEATHER_CYCLE, false);
         world.setGameRule(GameRule.NATURAL_REGENERATION, false);
         world.setBiome(0,0, Biome.PLAINS);
+        buildCube(new Location(world, 2, 2, 2));
+    }
+
+    @EventHandler
+    private void onChunkLoad(ChunkLoadEvent event){
+        Chunk chunk = event.getChunk();
+        World world = event.getWorld();
+        int x = chunk.getX();
+        int z = chunk.getZ();
+        Location chunkLocation = new Location(world, x, 0, z);
+        WorldBorder border = world.getWorldBorder();
+        if (!border.isInside(chunkLocation)){
+            System.out.println("ChunkLoadEvent cancelled " + x + z);
+            chunk.unload();
+        }
     }
 
 
@@ -147,11 +165,6 @@ public class MinecraftListener implements Listener {
         }
     }
 
-//    @EventHandler
-//    public void onChunkLoadEvent(ChunkLoadEvent event){
-//        System.out.println("This is a ChunkLoadEvent");
-//        System.out.println("Biome " + event.getWorld().getBiome(0,0));
-//    }
 
 //    @EventHandler  // TODO: events must have a static getHandlerList method to be able to be listened to
 //    public void onAllEvents(BlockEvent event){
@@ -159,7 +172,7 @@ public class MinecraftListener implements Listener {
 //    }
 
     private void buildCube(Location location){
-        location.getBlock().setType(Material.GLASS);
+        location.getBlock().setType(Material.BLUE_WOOL);
     }
 }
 
