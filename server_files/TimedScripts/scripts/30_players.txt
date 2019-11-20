@@ -2,6 +2,7 @@
 # TimedScript: 30_players                                 #
 # Author: CONSOLE (00000000-0000-0000-0000-000000000000)  #
 # ------------------------------------------------------- #
+# Let 30 players connect
 10: dc p0 connect
 20: dc p1 connect
 30: dc p2 connect
@@ -33,3 +34,36 @@
 290: dc p28 connect
 300: dc p29 connect
 310: dc p30 connect
+#
+# Disconnect players again
+320: dc p0 disconnect
+321: dc p1 disconnect
+322: dc p2 disconnect
+323: dc p3 disconnect
+324: dc p4 disconnect
+325: dc p5 disconnect
+326: dc p6 disconnect
+327: dc p7 disconnect
+328: dc p8 disconnect
+329: dc p9 disconnect
+330: dc p10 disconnect
+331: dc p11 disconnect
+332: dc p12 disconnect
+333: dc p13 disconnect
+334: dc p14 disconnect
+335: dc p15 disconnect
+336: dc p16 disconnect
+337: dc p17 disconnect
+338: dc p18 disconnect
+339: dc p19 disconnect
+340: dc p20 disconnect
+341: dc p21 disconnect
+342: dc p22 disconnect
+343: dc p23 disconnect
+344: dc p24 disconnect
+345: dc p25 disconnect
+346: dc p26 disconnect
+347: dc p27 disconnect
+348: dc p28 disconnect
+349: dc p29 disconnect
+350: dc p30 disconnect
