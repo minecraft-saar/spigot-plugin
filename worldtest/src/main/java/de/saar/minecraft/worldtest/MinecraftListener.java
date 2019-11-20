@@ -19,6 +19,7 @@ import org.bukkit.event.world.WorldLoadEvent;
 import org.bukkit.event.world.WorldSaveEvent;
 
 
+import java.io.*;
 import java.util.HashMap;
 
 
@@ -77,6 +78,7 @@ public class MinecraftListener implements Listener {
         world.setGameRule(GameRule.NATURAL_REGENERATION, false);
         world.setBiome(0,0, Biome.PLAINS);
         buildCube(new Location(world, 2, 2, 2));
+        loadPrebuiltStructure("/home/ca/Documents/Hiwi_Minecraft/spigot-plugin/worldtest/src/main/resources/prebuild_structures/orange_cube.csv", world);
     }
 
     @EventHandler
@@ -136,7 +138,6 @@ public class MinecraftListener implements Listener {
     public void onWorldLoadEvent(WorldLoadEvent event){
         World world = event.getWorld();
         prepareWorld(world);
-        Bukkit.broadcastMessage("World loaded " + world.getName());
         System.out.println("World was loaded " + world.getName());
     }
 
@@ -173,6 +174,45 @@ public class MinecraftListener implements Listener {
 
     private void buildCube(Location location){
         location.getBlock().setType(Material.BLUE_WOOL);
+    }
+
+    private void loadPrebuiltStructure(String filename, World world){
+        BufferedReader br = null;
+        try {
+            br = new BufferedReader(new FileReader(filename));
+            String line;
+            while ((line = br.readLine()) != null) {
+                // skip comments
+                if (line.startsWith("#")){
+                    continue;
+                }
+                // use comma as separator
+                String[] blockInfo = line.split(",");
+                int x = Integer.parseInt(blockInfo[0]);
+                int y = Integer.parseInt(blockInfo[1]);
+                int z = Integer.parseInt(blockInfo[2]);
+                String typeName = blockInfo[3];
+                // int type = Integer.parseInt(blockInfo[3]);
+
+                Location location = new Location(world, x, y, z);
+                location.getBlock().setType(Material.getMaterial(typeName));
+
+            }
+
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            if (br != null) {
+                try {
+                    br.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
     }
 }
 
