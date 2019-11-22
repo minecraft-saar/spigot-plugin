@@ -42,10 +42,4 @@ public class FlatChunkGenerator extends ChunkGenerator {
     public Location getFixedSpawnLocation(World world, Random random) {
     return new Location(world, 0, 2, 0);
   }
-
-//    @Override
-//    public ChunkData generateExtBlockSections(){
-//        return null;
-//  }
-
 }

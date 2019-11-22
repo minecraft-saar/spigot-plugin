@@ -4,7 +4,6 @@
 - build initial structures as instructed by the architect
 - make playerworlds smaller (50 * 50 or 20 * 20) --> worldborder, then don't load blocks outside of world border
 - delete old player worlds. When the server is shutdown or the player logs out?
-- save built structures
 
 
 ## Questions

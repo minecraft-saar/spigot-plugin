@@ -43,13 +43,16 @@ public class MinecraftListener implements Listener {
 
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
-        String playerName = event.getPlayer().getDisplayName();
-        System.out.println("First world " + event.getPlayer().getWorld().getName());
+        Player player = event.getPlayer();
+        String playerName = player.getDisplayName();
+        player.sendMessage("Welcome to the server, " + playerName);
 
+        // Teleport player to own world
         Location teleportLocation = nextWorld.getSpawnLocation();
         boolean worked = event.getPlayer().teleport(teleportLocation);
         System.out.format("Teleportation worked %b", worked);
-        System.out.println("Second world " + event.getPlayer().getWorld().getName());
+        System.out.println("Now in world " + player.getWorld().getName());
+        System.out.println("Now at block type: " + teleportLocation.getBlock().getType());
 
         // Add world to active worlds
         activeWorlds.put(nextWorld.getName(), nextWorld);
@@ -68,6 +71,10 @@ public class MinecraftListener implements Listener {
         System.out.println(teleportLocation.getBlock().getType());
     }
 
+    /**
+     * Sets all world settings to peaceful
+     * @param world
+     */
     private void prepareWorld(World world){
         world.setThundering(false);
         world.setSpawnFlags(false, false);
@@ -78,8 +85,12 @@ public class MinecraftListener implements Listener {
         world.setGameRule(GameRule.DO_WEATHER_CYCLE, false);
         world.setGameRule(GameRule.NATURAL_REGENERATION, false);
         world.setBiome(0,0, Biome.PLAINS);
-        buildCube(new Location(world, 2, 2, 2));
-        loadPrebuiltStructure("/home/ca/Documents/Hiwi_Minecraft/spigot-plugin/worldtest/src/main/resources/prebuild_structures/orange_cube.csv", world);
+
+        // Set initial blue block as orientation for planner and NLG
+        Location anchor = new Location(world,2,2,2);
+        anchor.getBlock().setType(Material.BLUE_WOOL);
+
+        loadPrebuiltStructure("/home/ca/Documents/Hiwi_Minecraft/spigot-plugin/worldtest/src/main/resources/prebuilt_structures/orange_cube.csv", world);
     }
 
     @EventHandler
@@ -100,7 +111,7 @@ public class MinecraftListener implements Listener {
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent event){
         event.getQuitMessage();
-        String filename = "saved_structure_" + event.getPlayer().getName() + System.currentTimeMillis();
+        String filename = "saved_structure_" + event.getPlayer().getName() + System.currentTimeMillis() + ".csv";
         try {
             saveBuiltStructure(filename, event.getPlayer().getWorld());
         } catch (FileNotFoundException e) {
@@ -110,12 +121,8 @@ public class MinecraftListener implements Listener {
 
     @EventHandler
     public void onBlockPlaced(BlockPlaceEvent event){
-        Block b = event.getBlock();
-        Material m = event.getBlock().getType();
-        String name = m.name();
-        int number = m.ordinal();
-        System.out.println("Block was placed with name " + name);
-        System.out.format("Block was placed with number %d", number);
+        Block block = event.getBlock();
+        System.out.println("Block was placed with name " + block.getType().name() + " " + block.getType().ordinal());
 
         System.out.println("Biome is " + event.getPlayer().getWorld().getBiome(0,0));
     }
@@ -147,7 +154,8 @@ public class MinecraftListener implements Listener {
 
     @EventHandler
     public void onWeatherChange(WeatherChangeEvent event){
-        if (event.toWeatherState()) {  // would change to raining, TODO: does thunder count as raining?
+        System.out.println("Attempted Weather Change to " + event.toWeatherState());
+        if (event.toWeatherState()) {  // would change to raining, thunder is already disabled
             event.setCancelled(true);
         }
     }
@@ -162,13 +170,13 @@ public class MinecraftListener implements Listener {
         event.getPlayer().setGameMode(GameMode.CREATIVE);
     }
 
-    @EventHandler
-    public void onWorldSave(WorldSaveEvent event){
-        if (event.getWorld().getName().startsWith("playerworld_")){
-            // TODO cancel
-            System.out.println(event.toString() + " should be cancelled");
-        }
-    }
+//    @EventHandler
+//    public void onWorldSave(WorldSaveEvent event){
+//        if (event.getWorld().getName().startsWith("playerworld_")){
+//            // TODO cancel
+//            System.out.println(event.toString() + " should be cancelled");
+//        }
+//    }
 
 
 //    @EventHandler  // TODO: events must have a static getHandlerList method to be able to be listened to
@@ -180,6 +188,11 @@ public class MinecraftListener implements Listener {
         location.getBlock().setType(Material.BLUE_WOOL);
     }
 
+    /**
+     * Reads blocks from a file and creates them in the given world.
+     * @param filename: csv-file of the line structure: x,y,z,block type name
+     * @param world: the world where the structure should be build
+     */
     private void loadPrebuiltStructure(String filename, World world){
         BufferedReader br = null;
         try {
@@ -199,12 +212,14 @@ public class MinecraftListener implements Listener {
                 // int type = Integer.parseInt(blockInfo[3]);
 
                 Location location = new Location(world, x, y, z);
-                location.getBlock().setType(Material.getMaterial(typeName));
-
+                Material newMaterial = Material.getMaterial(typeName);
+                if (newMaterial == null){
+                    System.out.println(typeName + " is not a valid Material. Skipped.");
+                } else {
+                    location.getBlock().setType(newMaterial);
+                }
             }
 
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
@@ -218,6 +233,12 @@ public class MinecraftListener implements Listener {
         }
     }
 
+    /**
+     * Saves all non-air blocks above the ground from a world to a csv-file.
+     * @param filename: csv-file where the blocks should be saved
+     * @param world:
+     * @throws FileNotFoundException
+     */
     private void saveBuiltStructure(String filename, World world) throws FileNotFoundException {
         WorldBorder border = world.getWorldBorder();
         HashSet<Block> toSave = new HashSet<>();

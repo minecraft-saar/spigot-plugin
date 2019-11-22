@@ -16,7 +16,9 @@ import org.bukkit.event.weather.WeatherChangeEvent;
 import org.bukkit.event.world.StructureGrowEvent;
 import org.bukkit.event.world.WorldLoadEvent;
 
+import java.io.*;
 import java.util.HashMap;
+import java.util.HashSet;
 
 public class MinecraftListener implements Listener {
 
@@ -51,7 +53,7 @@ public class MinecraftListener implements Listener {
         Location teleportLocation = nextWorld.getSpawnLocation();
         boolean worked = event.getPlayer().teleport(teleportLocation);
         System.out.format("Teleportation worked %b", worked);
-        System.out.println("Now in world " + event.getPlayer().getWorld().getName());
+        System.out.println("Now in world " + player.getWorld().getName());
         System.out.println("Now at block type: " + teleportLocation.getBlock().getType());
 
         // Add world to active worlds
@@ -158,5 +160,91 @@ public class MinecraftListener implements Listener {
     @EventHandler
     public void onPlayerGameModeChangeEvent (PlayerGameModeChangeEvent event){
         event.getPlayer().setGameMode(GameMode.CREATIVE);
+    }
+
+    /**
+     * Reads blocks from a file and creates them in the given world.
+     * @param filename: csv-file of the line structure: x,y,z,block type name
+     * @param world: the world where the structure should be build
+     */
+    private void loadPrebuiltStructure(String filename, World world){
+        BufferedReader br = null;
+        try {
+            br = new BufferedReader(new FileReader(filename));
+            String line;
+            while ((line = br.readLine()) != null) {
+                // skip comments
+                if (line.startsWith("#")){
+                    continue;
+                }
+                // use comma as separator
+                String[] blockInfo = line.split(",");
+                int x = Integer.parseInt(blockInfo[0]);
+                int y = Integer.parseInt(blockInfo[1]);
+                int z = Integer.parseInt(blockInfo[2]);
+                String typeName = blockInfo[3];
+                // int type = Integer.parseInt(blockInfo[3]);
+
+                Location location = new Location(world, x, y, z);
+                Material newMaterial = Material.getMaterial(typeName);
+                if (newMaterial == null){
+                    System.out.println(typeName + " is not a valid Material. Skipped.");
+                } else {
+                    location.getBlock().setType(newMaterial);
+                }
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            if (br != null) {
+                try {
+                    br.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
+    /**
+     * Saves all non-air blocks above the ground from a world to a csv-file.
+     * @param filename: csv-file where the blocks should be saved
+     * @param world:
+     * @throws FileNotFoundException
+     */
+    private void saveBuiltStructure(String filename, World world) throws FileNotFoundException {
+        WorldBorder border = world.getWorldBorder();
+        HashSet<Block> toSave = new HashSet<>();
+        Location center = border.getCenter();
+        int radius = ((Double)border.getSize()).intValue();  // TODO how to round here?
+
+        // Loop over height until there are only air blocks
+        boolean foundSolid = true;
+        int y = 1; // Upmost ground layer
+        while (foundSolid){
+            foundSolid = false;
+            y++;
+            // Loop over every block in this plain
+            for (int x = center.getBlockX() - radius; x <= center.getBlockX() + radius; x++){
+                for (int z = center.getBlockZ() - radius; z <= center.getBlockZ() + radius; z++){
+                    Block currentBlock = world.getBlockAt(x,y,z);
+                    if (!currentBlock.getType().isAir()){
+                        toSave.add(currentBlock);
+                        foundSolid = true;
+                        System.out.println(currentBlock);
+                    }
+                }
+            }
+        }
+        // Save blocks
+        File csvOutputFile = new File(filename);
+        PrintWriter pw = new PrintWriter(csvOutputFile);
+        for (Block block:toSave){
+            String line = String.format("%d,%d,%d,", block.getX(), block.getY(), block.getZ()) + block.getType().name();
+            pw.println(line);
+            System.out.println(line);
+        }
+        pw.flush();
     }
 }
