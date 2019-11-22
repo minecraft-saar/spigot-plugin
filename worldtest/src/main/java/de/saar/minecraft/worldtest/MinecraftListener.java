@@ -21,6 +21,7 @@ import org.bukkit.event.world.WorldSaveEvent;
 
 import java.io.*;
 import java.util.HashMap;
+import java.util.HashSet;
 
 
 public class MinecraftListener implements Listener {
@@ -99,6 +100,12 @@ public class MinecraftListener implements Listener {
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent event){
         event.getQuitMessage();
+        String filename = "saved_structure_" + event.getPlayer().getName() + System.currentTimeMillis();
+        try {
+            saveBuiltStructure(filename, event.getPlayer().getWorld());
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
     }
 
     @EventHandler
@@ -109,9 +116,6 @@ public class MinecraftListener implements Listener {
         int number = m.ordinal();
         System.out.println("Block was placed with name " + name);
         System.out.format("Block was placed with number %d", number);
-        System.out.println("b.getState().getData().toString() " + b.getState().getData().toString());
-        System.out.print("m.toString() " + m.toString());
-        System.out.println("m.data " + m.data);
 
         System.out.println("Biome is " + event.getPlayer().getWorld().getBiome(0,0));
     }
@@ -212,7 +216,41 @@ public class MinecraftListener implements Listener {
                 }
             }
         }
+    }
 
+    private void saveBuiltStructure(String filename, World world) throws FileNotFoundException {
+        WorldBorder border = world.getWorldBorder();
+        HashSet<Block> toSave = new HashSet<>();
+        Location center = border.getCenter();
+        int radius = ((Double)border.getSize()).intValue();  // TODO how to round here?
+
+        // Loop over height until there are only air blocks
+        boolean foundSolid = true;
+        int y = 1; // Upmost ground layer
+        while (foundSolid){
+            foundSolid = false;
+            y++;
+            // Loop over every block in this plain
+            for (int x = center.getBlockX() - radius; x <= center.getBlockX() + radius; x++){
+                for (int z = center.getBlockZ() - radius; z <= center.getBlockZ() + radius; z++){
+                    Block currentBlock = world.getBlockAt(x,y,z);
+                    if (!currentBlock.getType().isAir()){
+                        toSave.add(currentBlock);
+                        foundSolid = true;
+                        System.out.println(currentBlock);
+                    }
+                }
+            }
+        }
+        // Save blocks
+        File csvOutputFile = new File(filename);
+        PrintWriter pw = new PrintWriter(csvOutputFile);
+        for (Block block:toSave){
+            String line = String.format("%d,%d,%d,", block.getX(), block.getY(), block.getZ()) + block.getType().name();
+            pw.println(line);
+            System.out.println(line);
+        }
+        pw.flush();
     }
 }
 
