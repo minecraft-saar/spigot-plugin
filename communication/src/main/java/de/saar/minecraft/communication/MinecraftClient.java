@@ -2,11 +2,7 @@ package de.saar.minecraft.communication;
 
 import de.saar.minecraft.broker.BrokerGrpc;
 import de.saar.minecraft.broker.GameData;
-import de.saar.minecraft.shared.GameId;
-import de.saar.minecraft.shared.StatusMessage;
-import de.saar.minecraft.shared.TextMessage;
-import de.saar.minecraft.shared.BlockDestroyedMessage;
-import de.saar.minecraft.shared.BlockPlacedMessage;
+import de.saar.minecraft.shared.*;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.StatusRuntimeException;
@@ -54,29 +50,33 @@ public class MinecraftClient {
     /**
      * Registers a game with the broker. Returns a unique game ID for this game.
      */
-    public int registerGame(String playerName) {
+    public String registerGame(String playerName) {
         String hostname = "localhost";
         try {
             hostname = InetAddress.getLocalHost().getHostName();
         } catch (UnknownHostException e) {
             System.err.println("Hostname not found: " + e.getMessage());
-            return -1;
+            return "";
         }
 
         GameData mGameInfo = GameData.newBuilder().setClientAddress(hostname).setPlayerName(playerName)
                 .build();
 
         GameId mGameId;
+        WorldSelectMessage mWorldSelect;
         try {
-            mGameId = blockingStub.startGame(mGameInfo);
+            mWorldSelect = blockingStub.startGame(mGameInfo);
         } catch (StatusRuntimeException e) {
             System.err.println("RPC failed: " + e.getStatus());
-            return -1;
+            return "";
         }
 
         // remember active games
-        activeGames.put(playerName, mGameId.getId());
-        return mGameId.getId();
+        int gameId = mWorldSelect.getGameId();
+        activeGames.put(playerName, gameId);
+
+        // todo load world type
+        return mWorldSelect.getName();
     }
 
     public void finishGame(int gameId) {

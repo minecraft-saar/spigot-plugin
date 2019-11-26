@@ -17,6 +17,7 @@ import org.bukkit.event.world.StructureGrowEvent;
 import org.bukkit.event.world.WorldLoadEvent;
 
 import java.io.*;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.HashSet;
 
@@ -40,18 +41,33 @@ public class MinecraftListener implements Listener {
         creator.generateStructures(false);
         nextWorld = creator.createWorld();
         prepareWorld(nextWorld);
+        System.out.println("World was created and prepared " + nextWorld.getName());
     }
 
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
         String playerName = player.getDisplayName();
-        client.registerGame(playerName);
+        String structureFile = client.registerGame(playerName);
         player.sendMessage("Welcome to the server, " + playerName);
+        System.out.println(structureFile);
+        // Get correct structure file
+//        String filename = "prebuilt_structures/" + structureFile + ".csv";
+//        URL tmp = getClass().getResource(filename);
+//        File file = null;
+//        if (tmp != null){
+//            file = new File(tmp.getFile());
+//        }
+//
+//        if (file != null) {
+//            loadPrebuiltStructure(file, nextWorld);
+//        } else {
+//            System.out.println("File not found " + filename);
+//        }
 
         // Teleport player to own world
         Location teleportLocation = nextWorld.getSpawnLocation();
-        boolean worked = event.getPlayer().teleport(teleportLocation);
+        boolean worked = player.teleport(teleportLocation);
         System.out.format("Teleportation worked %b", worked);
         System.out.println("Now in world " + player.getWorld().getName());
         System.out.println("Now at block type: " + teleportLocation.getBlock().getType());
@@ -83,8 +99,8 @@ public class MinecraftListener implements Listener {
         world.setBiome(0,0, Biome.PLAINS);
 
         // Set initial blue block as orientation for planner and NLG
-        Location anchor = new Location(world,2,2,2);
-        anchor.getBlock().setType(Material.BLUE_WOOL);
+//        Location anchor = new Location(world,2,2,2);
+//        anchor.getBlock().setType(Material.BLUE_WOOL);
     }
 
     @EventHandler
@@ -164,13 +180,13 @@ public class MinecraftListener implements Listener {
 
     /**
      * Reads blocks from a file and creates them in the given world.
-     * @param filename: csv-file of the line structure: x,y,z,block type name
+     * @param file: csv-file of the line structure: x,y,z,block type name
      * @param world: the world where the structure should be build
      */
-    private void loadPrebuiltStructure(String filename, World world){
+    private void loadPrebuiltStructure(File file, World world){
         BufferedReader br = null;
         try {
-            br = new BufferedReader(new FileReader(filename));
+            br = new BufferedReader(new FileReader(file));
             String line;
             while ((line = br.readLine()) != null) {
                 // skip comments
