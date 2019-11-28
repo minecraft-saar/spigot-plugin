@@ -47,6 +47,28 @@ public class MinecraftListener implements Listener {
         String playerName = player.getDisplayName();
         player.sendMessage("Welcome to the server, " + playerName);
 
+        String structureFile = "bridge";
+//        String filename = "/prebuilt_structures/" + structureFile + ".csv";
+        String filename = "/resources/prebuilt_structures/" + structureFile + ".csv";
+        InputStream in = Thread.currentThread().getContextClassLoader().getResourceAsStream(filename);
+
+        try {
+            System.out.println(getClass().getResource(filename).toURI());
+            File file = new File(getClass().getResource(filename).toURI());
+            System.out.println(file);
+
+        } catch (Exception e){
+            System.out.println(e);
+        }
+        //InputStream in = getClass().getResourceAsStream(filename);
+        System.out.println("Inputstream " + in);
+        InputStream in2 = getClass().getClassLoader().getResourceAsStream(filename);
+        System.out.println("Inputstream 2 " + in2);
+        if (in != null) {
+            BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+            loadPrebuiltStructure(reader, nextWorld);
+        }
+
         // Teleport player to own world
         Location teleportLocation = nextWorld.getSpawnLocation();
         boolean worked = event.getPlayer().teleport(teleportLocation);
@@ -90,7 +112,9 @@ public class MinecraftListener implements Listener {
         Location anchor = new Location(world,2,2,2);
         anchor.getBlock().setType(Material.BLUE_WOOL);
 
-        loadPrebuiltStructure("/home/ca/Documents/Hiwi_Minecraft/spigot-plugin/worldtest/src/main/resources/prebuilt_structures/orange_cube.csv", world);
+
+
+        //loadPrebuiltStructure("/home/ca/Documents/Hiwi_Minecraft/spigot-plugin/worldtest/src/main/resources/prebuilt_structures/orange_cube.csv", world);
     }
 
     @EventHandler
@@ -186,6 +210,49 @@ public class MinecraftListener implements Listener {
 
     private void buildCube(Location location){
         location.getBlock().setType(Material.BLUE_WOOL);
+    }
+
+    /**
+     * Reads blocks from a file and creates them in the given world.
+     * @param reader: BufferedReader for a csv-file of the line structure: x,y,z,block type name
+     * @param world: the world where the structure should be build
+     */
+    private void loadPrebuiltStructure(BufferedReader reader, World world){
+        try {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                // skip comments
+                if (line.startsWith("#")){
+                    continue;
+                }
+                // use comma as separator
+                String[] blockInfo = line.split(",");
+                int x = Integer.parseInt(blockInfo[0]);
+                int y = Integer.parseInt(blockInfo[1]);
+                int z = Integer.parseInt(blockInfo[2]);
+                String typeName = blockInfo[3];
+                // int type = Integer.parseInt(blockInfo[3]);
+
+                Location location = new Location(world, x, y, z);
+                Material newMaterial = Material.getMaterial(typeName);
+                if (newMaterial == null){
+                    System.out.println(typeName + " is not a valid Material. Skipped.");
+                } else {
+                    location.getBlock().setType(newMaterial);
+                }
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            if (reader != null) {
+                try {
+                    reader.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
     }
 
     /**

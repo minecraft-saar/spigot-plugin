@@ -21,7 +21,6 @@ public class FlatChunkGenerator extends ChunkGenerator {
         WorldBorder border = world.getWorldBorder();
         border.setSize(32); // Because of chunk size 16
         ChunkData chunk = createChunkData(world);
-        System.out.println("World Center " + border.getCenter());
 
         Location chunkLocation = new Location(world, chunkX, 0, chunkZ);
         if (!border.isInside(chunkLocation)){
