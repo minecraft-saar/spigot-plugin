@@ -93,6 +93,9 @@ public class MinecraftListener implements Listener {
      * @param world
      */
     private void prepareWorld(World world){
+        // Only positive coordinates with chunk size 16
+        world.getWorldBorder().setCenter(world.getSpawnLocation());
+        world.getWorldBorder().setSize(32);
         world.setThundering(false);
         world.setSpawnFlags(false, false);
         world.setDifficulty(Difficulty.PEACEFUL);
