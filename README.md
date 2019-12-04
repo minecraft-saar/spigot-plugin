@@ -44,3 +44,4 @@ Copies of files of the spigot server that I modified
 
 ## Related third-party plugins
 - [https://dev.bukkit.org/projects/virtualplayers](https://dev.bukkit.org/projects/virtualplayers)
+- [https://www.spigotmc.org/resources/timed-scripts.28121/](https://www.spigotmc.org/resources/timed-scripts.28121/)
