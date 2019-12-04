@@ -120,10 +120,11 @@ public class MinecraftListener implements Listener {
         int gameId = client.getGameIdForPlayer(player.getName());
         System.out.println(gameId + " " + block.getX() + " " + block.getY() + " " + block.getZ());
         String message = client.sendBlockPlaced(gameId, block.getX(), block.getY(), block.getZ(), block.getType().ordinal());
-        String[] parts = message.split(":");
-        int id = Integer.parseInt(parts[1]);
-        Material m = Material.values()[id];
-        player.sendMessage(parts[0] + m.toString());
+        player.sendMessage(message);
+        // String[] parts = message.split(":");
+        // int id = Integer.parseInt(parts[1]);
+        // Material m = Material.values()[id];
+        // player.sendMessage(parts[0] + m.toString());
     }
 
     @EventHandler
@@ -141,10 +142,11 @@ public class MinecraftListener implements Listener {
         int gameId = client.getGameIdForPlayer(player.getName());
         String message = client.sendBlockDestroyed(gameId, block.getX(), block.getY(), block.getZ(), block.getType().ordinal());
         System.out.println(message);
-        String[] parts = message.split(":");
-        int id = Integer.parseInt(parts[1]);
-        Material m = Material.values()[id];
-        player.sendMessage(parts[0] + m.toString());
+        player.sendMessage(message);
+        // String[] parts = message.split(":");
+        // int id = Integer.parseInt(parts[1]);
+        // Material m = Material.values()[id];
+        // player.sendMessage(parts[0] + m.toString());
     }
 
     // TODO: what if block is not broken but just damaged?
