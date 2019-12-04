@@ -99,8 +99,8 @@ public class MinecraftListener implements Listener {
         world.setBiome(0,0, Biome.PLAINS);
 
         // Set initial blue block as orientation for planner and NLG
-//        Location anchor = new Location(world,2,2,2);
-//        anchor.getBlock().setType(Material.BLUE_WOOL);
+        Location anchor = new Location(world,0,2,0);
+        anchor.getBlock().setType(Material.BLUE_WOOL);
     }
 
     @EventHandler
