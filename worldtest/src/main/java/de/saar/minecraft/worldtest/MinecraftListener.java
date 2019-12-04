@@ -1,5 +1,7 @@
 package de.saar.minecraft.worldtest;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.bukkit.*;
 import org.bukkit.block.Biome;
 import org.bukkit.block.Block;
@@ -30,6 +32,8 @@ public class MinecraftListener implements Listener {
 
     HashMap<String, World> activeWorlds = new HashMap<String, World>();
 
+    private static Logger logger = LogManager.getLogger(MinecraftListener.class);
+
     public MinecraftListener(){
         super();
 
@@ -53,17 +57,17 @@ public class MinecraftListener implements Listener {
         InputStream in = Thread.currentThread().getContextClassLoader().getResourceAsStream(filename);
 
         try {
-            System.out.println(getClass().getResource(filename).toURI());
+            logger.error(getClass().getResource(filename).toURI());
             File file = new File(getClass().getResource(filename).toURI());
-            System.out.println(file);
+            logger.error(file);
 
         } catch (Exception e){
-            System.out.println(e);
+            logger.error(e);
         }
         //InputStream in = getClass().getResourceAsStream(filename);
-        System.out.println("Inputstream " + in);
+        logger.error("Inputstream " + in + " error message");
         InputStream in2 = getClass().getClassLoader().getResourceAsStream(filename);
-        System.out.println("Inputstream 2 " + in2);
+        logger.error("Inputstream 2 " + in2);
         if (in != null) {
             BufferedReader reader = new BufferedReader(new InputStreamReader(in));
             loadPrebuiltStructure(reader, nextWorld);
@@ -72,9 +76,12 @@ public class MinecraftListener implements Listener {
         // Teleport player to own world
         Location teleportLocation = nextWorld.getSpawnLocation();
         boolean worked = event.getPlayer().teleport(teleportLocation);
-        System.out.format("Teleportation worked %b", worked);
-        System.out.println("Now in world " + player.getWorld().getName());
-        System.out.println("Now at block type: " + teleportLocation.getBlock().getType());
+        if (!worked){
+            // TODO: throw error
+            logger.error("Teleportation failed");
+        }
+        logger.info("Now in world " + player.getWorld().getName());
+        logger.debug("Now at block type: " + teleportLocation.getBlock().getType());
 
         // Add world to active worlds
         activeWorlds.put(nextWorld.getName(), nextWorld);
@@ -82,15 +89,9 @@ public class MinecraftListener implements Listener {
         // Create new preloaded world for the next player
         String worldName = "playerworld_" + activeWorlds.size();
         creator = new WorldCreator(worldName);
-//        World templateWorld = event.getPlayer().getServer().getWorld("playerworld_1");
-//        System.out.println("template world " + templateWorld.toString());
-//        creator.copy(templateWorld);
         creator.generator(new FlatChunkGenerator());
         creator.generateStructures(false);
         nextWorld = creator.createWorld();
-
-        System.out.println(Material.BLUE_WOOL);
-        System.out.println(teleportLocation.getBlock().getType());
     }
 
     /**
@@ -108,12 +109,6 @@ public class MinecraftListener implements Listener {
         world.setGameRule(GameRule.NATURAL_REGENERATION, false);
         world.setBiome(0,0, Biome.PLAINS);
 
-        // Set initial blue block as orientation for planner and NLG
-        Location anchor = new Location(world,2,2,2);
-        anchor.getBlock().setType(Material.BLUE_WOOL);
-
-
-
         //loadPrebuiltStructure("/home/ca/Documents/Hiwi_Minecraft/spigot-plugin/worldtest/src/main/resources/prebuilt_structures/orange_cube.csv", world);
     }
 
@@ -126,7 +121,7 @@ public class MinecraftListener implements Listener {
         Location chunkLocation = new Location(world, x, 0, z);
         WorldBorder border = world.getWorldBorder();
         if (!border.isInside(chunkLocation)){
-            System.out.println("ChunkLoadEvent cancelled " + x + z);
+            logger.info("ChunkLoadEvent cancelled " + x + z);
             chunk.unload();
         }
     }
@@ -146,9 +141,9 @@ public class MinecraftListener implements Listener {
     @EventHandler
     public void onBlockPlaced(BlockPlaceEvent event){
         Block block = event.getBlock();
-        System.out.println("Block was placed with name " + block.getType().name() + " " + block.getType().ordinal());
+        logger.info("Block was placed with name " + block.getType().name() + " " + block.getType().ordinal());
 
-        System.out.println("Biome is " + event.getPlayer().getWorld().getBiome(0,0));
+        logger.info("Biome is " + event.getPlayer().getWorld().getBiome(0,0));
     }
 
     @EventHandler
@@ -161,7 +156,7 @@ public class MinecraftListener implements Listener {
             player.sendMessage("You cannot destroy this");
             return;
         }
-        System.out.println("Block was destroyed with name " + block.getType().name() + " " + block.getType().ordinal());
+        logger.info("Block was destroyed with name " + block.getType().name() + " " + block.getType().ordinal());
     }
 
     @EventHandler
@@ -173,12 +168,12 @@ public class MinecraftListener implements Listener {
     public void onWorldLoadEvent(WorldLoadEvent event){
         World world = event.getWorld();
         prepareWorld(world);
-        System.out.println("World was loaded " + world.getName());
+        logger.info("World was loaded " + world.getName());
     }
 
     @EventHandler
     public void onWeatherChange(WeatherChangeEvent event){
-        System.out.println("Attempted Weather Change to " + event.toWeatherState());
+        logger.info("Attempted Weather Change to " + event.toWeatherState());
         if (event.toWeatherState()) {  // would change to raining, thunder is already disabled
             event.setCancelled(true);
         }
@@ -194,23 +189,12 @@ public class MinecraftListener implements Listener {
         event.getPlayer().setGameMode(GameMode.CREATIVE);
     }
 
-//    @EventHandler
-//    public void onWorldSave(WorldSaveEvent event){
-//        if (event.getWorld().getName().startsWith("playerworld_")){
-//            // TODO cancel
-//            System.out.println(event.toString() + " should be cancelled");
-//        }
-//    }
 
 
 //    @EventHandler  // TODO: events must have a static getHandlerList method to be able to be listened to
 //    public void onAllEvents(BlockEvent event){
-//        System.out.println("There was an " + event.getEventName() + event.toString());
+//        logger.info("There was an " + event.getEventName() + event.toString());
 //    }
-
-    private void buildCube(Location location){
-        location.getBlock().setType(Material.BLUE_WOOL);
-    }
 
     /**
      * Reads blocks from a file and creates them in the given world.
@@ -236,7 +220,7 @@ public class MinecraftListener implements Listener {
                 Location location = new Location(world, x, y, z);
                 Material newMaterial = Material.getMaterial(typeName);
                 if (newMaterial == null){
-                    System.out.println(typeName + " is not a valid Material. Skipped.");
+                    logger.error(typeName + " is not a valid Material. Skipped.");
                 } else {
                     location.getBlock().setType(newMaterial);
                 }
@@ -281,7 +265,7 @@ public class MinecraftListener implements Listener {
                 Location location = new Location(world, x, y, z);
                 Material newMaterial = Material.getMaterial(typeName);
                 if (newMaterial == null){
-                    System.out.println(typeName + " is not a valid Material. Skipped.");
+                    logger.error(typeName + " is not a valid Material. Skipped.");
                 } else {
                     location.getBlock().setType(newMaterial);
                 }
@@ -325,7 +309,7 @@ public class MinecraftListener implements Listener {
                     if (!currentBlock.getType().isAir()){
                         toSave.add(currentBlock);
                         foundSolid = true;
-                        System.out.println(currentBlock);
+                        logger.debug("Adding to save set " + currentBlock);
                     }
                 }
             }
@@ -336,7 +320,7 @@ public class MinecraftListener implements Listener {
         for (Block block:toSave){
             String line = String.format("%d,%d,%d,", block.getX(), block.getY(), block.getZ()) + block.getType().name();
             pw.println(line);
-            System.out.println(line);
+            logger.info("Saved: " + line);
         }
         pw.flush();
     }

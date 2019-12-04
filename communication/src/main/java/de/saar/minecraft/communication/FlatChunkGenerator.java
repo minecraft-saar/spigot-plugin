@@ -5,6 +5,8 @@ package de.saar.minecraft.communication;
  */
 
 import java.util.Random;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -15,6 +17,8 @@ import org.bukkit.generator.ChunkGenerator;
 
 public class FlatChunkGenerator extends ChunkGenerator {
 
+    private static Logger logger = LogManager.getLogger(FlatChunkGenerator.class);
+
     @Override
     public ChunkData generateChunkData(World world, Random random, int chunkX, int chunkZ, BiomeGrid biome) {
 //        world.getWorldBorder().setCenter(getFixedSpawnLocation(world, null));
@@ -24,7 +28,7 @@ public class FlatChunkGenerator extends ChunkGenerator {
 
         Location chunkLocation = new Location(world, chunkX, 0, chunkZ);
         if (!border.isInside(chunkLocation)){
-            System.out.println("Outside border " + chunkLocation.getX() + " " + border.getCenter().getBlockX());
+            logger.info("Outside border " + chunkLocation.getX() + " " + border.getCenter().getBlockX());
             return chunk;
         }
         // Set ground blocks

@@ -6,6 +6,8 @@ import de.saar.minecraft.shared.*;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.StatusRuntimeException;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -20,7 +22,8 @@ public class MinecraftClient {
     private BrokerGrpc.BrokerBlockingStub blockingStub;
     private BrokerGrpc.BrokerStub nonblockingStub;
 
-    private Random random = new Random();
+    private static Logger logger = LogManager.getLogger(MinecraftClient.class);
+
     private HashMap<String, Integer> activeGames;
 
     /**
@@ -36,8 +39,8 @@ public class MinecraftClient {
      * Construct client for accessing Broker using the existing channel.
      */
     MinecraftClient(ManagedChannel channel) {
-        System.out.println("In Channel constructor of Minecraft client");
-        System.out.println(channel.toString());
+        logger.debug("In Channel constructor of Minecraft client");
+        logger.debug(channel.toString());
         this.channel = channel;
         blockingStub = BrokerGrpc.newBlockingStub(channel);
         nonblockingStub = BrokerGrpc.newStub(channel);
@@ -55,19 +58,18 @@ public class MinecraftClient {
         try {
             hostname = InetAddress.getLocalHost().getHostName();
         } catch (UnknownHostException e) {
-            System.err.println("Hostname not found: " + e.getMessage());
+            logger.error("Hostname not found: " + e.getMessage());
             return "";
         }
 
         GameData mGameInfo = GameData.newBuilder().setClientAddress(hostname).setPlayerName(playerName)
                 .build();
 
-        GameId mGameId;
         WorldSelectMessage mWorldSelect;
         try {
             mWorldSelect = blockingStub.startGame(mGameInfo);
         } catch (StatusRuntimeException e) {
-            System.err.println("RPC failed: " + e.getStatus());
+            logger.error("RPC failed: " + e.getStatus());
             return "";
         }
 
@@ -81,24 +83,23 @@ public class MinecraftClient {
 
     public void finishGame(int gameId) {
         activeGames.values().remove(gameId);
-        System.out.println(String.format("Removed player %d", gameId));
-        System.out.println(activeGames.toString());
+        logger.info(String.format("Removed player %d", gameId));
+        logger.info(activeGames.toString());
         GameId mGameId = GameId.newBuilder().setId(gameId).build();
         blockingStub.endGame(mGameId);  // TODO: what to do with the void return
     }
 
     public String sendPlayerPosition(int gameId, int x, int y, int z){
-        GameId mGameId = GameId.newBuilder().setId(gameId).build();  // TODO: why construct id?
         StatusMessage position = StatusMessage.newBuilder().setGameId(gameId).setX(x).setY(y).setZ(z).build();
         Iterator<TextMessage> messageStream = blockingStub.handleStatusInformation(position);
-        String result = "";
+        StringBuilder result = new StringBuilder();
         for (; messageStream.hasNext(); ) {
             TextMessage m = messageStream.next();
-            System.out.println(m.getGameId());
-            System.out.println(m.getText());
-            result += m.getText();
+            logger.debug(m.getGameId());
+            logger.debug(m.getText());
+            result.append(m.getText());
         }
-        return result;
+        return result.toString();
     }
 
     int getGameIdForPlayer(String playerName){
@@ -112,23 +113,23 @@ public class MinecraftClient {
     public String sendBlockPlaced(int gameId, int x, int y, int z, int type){
         BlockPlacedMessage message = BlockPlacedMessage.newBuilder().setGameId(gameId).setX(x).setY(y).setZ(z).setType(type).build();
         Iterator<TextMessage> messageStream = blockingStub.handleBlockPlaced(message);
-        String result = "";
+        StringBuilder result = new StringBuilder();
         for (; messageStream.hasNext(); ) {
             TextMessage m = messageStream.next();
-            result += m.getText();
+            result.append(m.getText());
         }
-        return result;
+        return result.toString();
     }
 
     public String sendBlockDestroyed(int gameId, int x, int y, int z, int type){
         BlockDestroyedMessage message = BlockDestroyedMessage.newBuilder().setGameId(gameId).setX(x).setY(y).setZ(z).setType(type).build();
         Iterator<TextMessage> messageStream = blockingStub.handleBlockDestroyed(message);
-        String result = "";
+        StringBuilder result = new StringBuilder();
         for (; messageStream.hasNext(); ) {
             TextMessage m = messageStream.next();
-            result += m.getText();
+            result.append(m.getText());
         }
-        return result;
+        return result.toString();
     }
 
 

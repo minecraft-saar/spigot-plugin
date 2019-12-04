@@ -1,5 +1,7 @@
 package de.saar.minecraft.communication;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.bukkit.*;
 import org.bukkit.block.Biome;
 import org.bukkit.block.Block;
@@ -17,7 +19,6 @@ import org.bukkit.event.world.StructureGrowEvent;
 import org.bukkit.event.world.WorldLoadEvent;
 
 import java.io.*;
-import java.net.URL;
 import java.util.HashMap;
 import java.util.HashSet;
 
@@ -26,6 +27,7 @@ public class MinecraftListener implements Listener {
     MinecraftClient client;
     WorldCreator creator;
     World nextWorld;  // Preloaded world for the next joining player
+    private static Logger logger = LogManager.getLogger(MinecraftListener.class);
 
     HashMap<String, World> activeWorlds = new HashMap<String, World>();
 
@@ -41,7 +43,7 @@ public class MinecraftListener implements Listener {
         creator.generateStructures(false);
         nextWorld = creator.createWorld();
         prepareWorld(nextWorld);
-        System.out.println("World was created and prepared " + nextWorld.getName());
+        logger.info("World was created and prepared " + nextWorld.getName());
     }
 
     @EventHandler
@@ -50,7 +52,7 @@ public class MinecraftListener implements Listener {
         String playerName = player.getDisplayName();
         String structureFile = client.registerGame(playerName);
         player.sendMessage("Welcome to the server, " + playerName);
-        System.out.println(structureFile);
+        logger.info(structureFile);
         // Get correct structure file
 //        String filename = "prebuilt_structures/" + structureFile + ".csv";
 //        URL tmp = getClass().getResource(filename);
@@ -62,15 +64,18 @@ public class MinecraftListener implements Listener {
 //        if (file != null) {
 //            loadPrebuiltStructure(file, nextWorld);
 //        } else {
-//            System.out.println("File not found " + filename);
+//            logger.info("File not found " + filename);
 //        }
 
         // Teleport player to own world
         Location teleportLocation = nextWorld.getSpawnLocation();
         boolean worked = player.teleport(teleportLocation);
-        System.out.format("Teleportation worked %b", worked);
-        System.out.println("Now in world " + player.getWorld().getName());
-        System.out.println("Now at block type: " + teleportLocation.getBlock().getType());
+        if (!worked){
+            // TODO: throw error
+            logger.error("Teleportation failed");
+        }
+        logger.info("Now in world " + player.getWorld().getName());
+        logger.debug("Now at block type: " + teleportLocation.getBlock().getType());
 
         // Add world to active worlds
         activeWorlds.put(nextWorld.getName(), nextWorld);
@@ -97,10 +102,6 @@ public class MinecraftListener implements Listener {
         world.setGameRule(GameRule.DO_WEATHER_CYCLE, false);
         world.setGameRule(GameRule.NATURAL_REGENERATION, false);
         world.setBiome(0,0, Biome.PLAINS);
-
-        // Set initial blue block as orientation for planner and NLG
-//        Location anchor = new Location(world,2,2,2);
-//        anchor.getBlock().setType(Material.BLUE_WOOL);
     }
 
     @EventHandler
@@ -113,12 +114,12 @@ public class MinecraftListener implements Listener {
     @EventHandler
     public void onBlockPlaced(BlockPlaceEvent event){
         Block block = event.getBlock();
-        System.out.println("Block was placed with name " + block.getType().name() + " " + block.getType().ordinal());
+        logger.info("Block was placed with name " + block.getType().name() + " " + block.getType().ordinal());
 
 
         Player player = event.getPlayer();
         int gameId = client.getGameIdForPlayer(player.getName());
-        System.out.println(gameId + " " + block.getX() + " " + block.getY() + " " + block.getZ());
+        logger.debug(gameId + " " + block.getX() + " " + block.getY() + " " + block.getZ());
         String message = client.sendBlockPlaced(gameId, block.getX(), block.getY(), block.getZ(), block.getType().ordinal());
         String[] parts = message.split(":");
         int id = Integer.parseInt(parts[1]);
@@ -136,11 +137,11 @@ public class MinecraftListener implements Listener {
             player.sendMessage("You cannot destroy this");
             return;
         }
-        System.out.println("Block was destroyed with name " + block.getType().name() + " " + block.getType().ordinal());
+        logger.info("Block was destroyed with name " + block.getType().name() + " " + block.getType().ordinal());
         
         int gameId = client.getGameIdForPlayer(player.getName());
         String message = client.sendBlockDestroyed(gameId, block.getX(), block.getY(), block.getZ(), block.getType().ordinal());
-        System.out.println(message);
+        logger.info(message);
         String[] parts = message.split(":");
         int id = Integer.parseInt(parts[1]);
         Material m = Material.values()[id];
@@ -157,12 +158,12 @@ public class MinecraftListener implements Listener {
     public void onWorldLoadEvent(WorldLoadEvent event){
         World world = event.getWorld();
         prepareWorld(world);
-        System.out.println("World was loaded " + world.getName());
+        logger.info("World was loaded " + world.getName());
     }
 
     @EventHandler
     public void onWeatherChange(WeatherChangeEvent event){
-        System.out.println("Attempted Weather Change to " + event.toWeatherState());
+        logger.info("Attempted Weather Change to " + event.toWeatherState());
         if (event.toWeatherState()) {  // would change to raining, thunder is already disabled
             event.setCancelled(true);
         }
@@ -204,7 +205,7 @@ public class MinecraftListener implements Listener {
                 Location location = new Location(world, x, y, z);
                 Material newMaterial = Material.getMaterial(typeName);
                 if (newMaterial == null){
-                    System.out.println(typeName + " is not a valid Material. Skipped.");
+                    logger.error(typeName + " is not a valid Material. Skipped.");
                 } else {
                     location.getBlock().setType(newMaterial);
                 }
@@ -248,7 +249,7 @@ public class MinecraftListener implements Listener {
                     if (!currentBlock.getType().isAir()){
                         toSave.add(currentBlock);
                         foundSolid = true;
-                        System.out.println(currentBlock);
+                        logger.debug("Adding to save set " + currentBlock);
                     }
                 }
             }
@@ -259,7 +260,7 @@ public class MinecraftListener implements Listener {
         for (Block block:toSave){
             String line = String.format("%d,%d,%d,", block.getX(), block.getY(), block.getZ()) + block.getType().name();
             pw.println(line);
-            System.out.println(line);
+            logger.info("Saved: " + line);
         }
         pw.flush();
     }
