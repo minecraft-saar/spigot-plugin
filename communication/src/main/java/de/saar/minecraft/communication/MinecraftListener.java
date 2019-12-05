@@ -19,6 +19,7 @@ import org.bukkit.event.world.StructureGrowEvent;
 import org.bukkit.event.world.WorldLoadEvent;
 
 import java.io.*;
+import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.HashSet;
 
@@ -48,7 +49,14 @@ public class MinecraftListener implements Listener {
     public void onPlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
         String playerName = player.getDisplayName();
-        String structureFile = client.registerGame(playerName);
+        String structureFile = "";
+        try {
+            structureFile = client.registerGame(playerName);
+        } catch (UnknownHostException e){
+            player.sendMessage("You could not connect to the experiment server");  // TODO: display exception details or not?
+            logger.error("Player {} could not connect: {}", playerName, e);
+            return;
+        }
         player.sendMessage("Welcome to the server, " + playerName);
 
         // Get correct structure file
@@ -56,11 +64,18 @@ public class MinecraftListener implements Listener {
         InputStream in = MinecraftListener.class.getResourceAsStream(filename);
         if (in != null) {
             BufferedReader reader = new BufferedReader(new InputStreamReader(in));
-            loadPrebuiltStructure(reader, nextWorld);
-            logger.info("Loaded structure: {}", filename);
+            try {
+                loadPrebuiltStructure(reader, nextWorld);
+                logger.info("Loaded structure: {}", filename);
+            } catch (IOException e){
+                logger.error("World file could not be loaded: {} {}", filename, e);
+                player.sendMessage("World file could not be loaded");
+                // TODO: notify broker that set-up is wrong
+            }
         } else {
-            logger.error("Word file could not be loaded: {}", filename);
-            // TODO: throw error
+            logger.error("World file is not found: {}", filename);
+            player.sendMessage("World file is not found");
+            // TODO: notify broker that set-up is wrong
         }
 
         // Teleport player to own world
@@ -68,7 +83,8 @@ public class MinecraftListener implements Listener {
         boolean worked = player.teleport(teleportLocation);
         if (!worked){
             logger.error("Teleportation failed");
-            // TODO: throw error
+            player.sendMessage("Teleportation failed");
+            // TODO: notify broker that the player is in the wrong world
         }
         logger.info("Now in world {}", player.getWorld().getName());
         logger.debug("Now at block type: {}", teleportLocation.getBlock().getType());
@@ -181,14 +197,15 @@ public class MinecraftListener implements Listener {
     /**
      * Reads blocks from a file and creates them in the given world.
      * @param reader: BufferedReader for a csv-file of the line structure: x,y,z,block type name
-     * @param world: the world where the structure should be build
+     * @param world: the world where the structure should be built
+     * @throws IOException
      */
-    private void loadPrebuiltStructure(BufferedReader reader, World world){
-        try {
+    private void loadPrebuiltStructure(BufferedReader reader, World world) throws IOException {
+        try (reader) {
             String line;
             while ((line = reader.readLine()) != null) {
                 // skip comments
-                if (line.startsWith("#")){
+                if (line.startsWith("#")) {
                     continue;
                 }
                 // use comma as separator
@@ -201,23 +218,17 @@ public class MinecraftListener implements Listener {
 
                 Location location = new Location(world, x, y, z);
                 Material newMaterial = Material.getMaterial(typeName);
-                if (newMaterial == null){
-                    logger.error(typeName + " is not a valid Material. Skipped.");
+                if (newMaterial == null) {
+                    logger.error(typeName + " is not a valid Material.");
+                    throw new IOException(typeName + " is not a valid Material.");
                 } else {
                     location.getBlock().setType(newMaterial);
                 }
             }
 
         } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            if (reader != null) {
-                try {
-                    reader.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
+            e.printStackTrace();  // TODO: log with logger not to standard error
+            throw e;
         }
     }
 

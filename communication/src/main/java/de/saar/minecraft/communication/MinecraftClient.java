@@ -53,13 +53,13 @@ public class MinecraftClient {
     /**
      * Registers a game with the broker. Returns a unique game ID for this game.
      */
-    public String registerGame(String playerName) {
+    public String registerGame(String playerName) throws UnknownHostException {
         String hostname = "localhost";
         try {
             hostname = InetAddress.getLocalHost().getHostName();
         } catch (UnknownHostException e) {
             logger.error("Hostname not found: " + e.getMessage());
-            return "";
+            throw e;
         }
 
         GameData mGameInfo = GameData.newBuilder().setClientAddress(hostname).setPlayerName(playerName)
@@ -70,7 +70,7 @@ public class MinecraftClient {
             mWorldSelect = blockingStub.startGame(mGameInfo);
         } catch (StatusRuntimeException e) {
             logger.error("RPC failed: " + e.getStatus());
-            return "";
+            throw e;
         }
 
         // remember active games
