@@ -27,12 +27,10 @@ import java.util.HashSet;
 
 
 public class MinecraftListener implements Listener {
+    private static Logger logger = LogManager.getLogger(MinecraftListener.class);
     WorldCreator creator;
     World nextWorld;  // Preloaded world for the next joining player
-
     HashMap<String, World> activeWorlds = new HashMap<String, World>();
-
-    private static Logger logger = LogManager.getLogger(MinecraftListener.class);
 
     public MinecraftListener(){
         super();
@@ -42,7 +40,7 @@ public class MinecraftListener implements Listener {
         creator.generateStructures(false);
         nextWorld = creator.createWorld();
         prepareWorld(nextWorld);
-
+        logger.info("World was created and prepared {}", nextWorld.getName());
     }
 
     @EventHandler
@@ -52,36 +50,26 @@ public class MinecraftListener implements Listener {
         player.sendMessage("Welcome to the server, " + playerName);
 
         String structureFile = "bridge";
-//        String filename = "/prebuilt_structures/" + structureFile + ".csv";
-        String filename = "/resources/prebuilt_structures/" + structureFile + ".csv";
-        InputStream in = Thread.currentThread().getContextClassLoader().getResourceAsStream(filename);
-
-        try {
-            logger.error(getClass().getResource(filename).toURI());
-            File file = new File(getClass().getResource(filename).toURI());
-            logger.error(file);
-
-        } catch (Exception e){
-            logger.error(e);
-        }
-        //InputStream in = getClass().getResourceAsStream(filename);
-        logger.error("Inputstream " + in + " error message");
-        InputStream in2 = getClass().getClassLoader().getResourceAsStream(filename);
-        logger.error("Inputstream 2 " + in2);
+        String filename = String.format("/de/saar/minecraft/worlds/%s.csv", structureFile);
+        InputStream in = MinecraftListener.class.getResourceAsStream(filename);
         if (in != null) {
             BufferedReader reader = new BufferedReader(new InputStreamReader(in));
             loadPrebuiltStructure(reader, nextWorld);
+            logger.info("Loaded structure: {}", filename);
+        } else {
+            logger.error("Word file could not be loaded: {}", filename);
+            // TODO: throw error
         }
 
         // Teleport player to own world
         Location teleportLocation = nextWorld.getSpawnLocation();
-        boolean worked = event.getPlayer().teleport(teleportLocation);
+        boolean worked = player.teleport(teleportLocation);
         if (!worked){
-            // TODO: throw error
             logger.error("Teleportation failed");
+            // TODO: throw error
         }
-        logger.info("Now in world " + player.getWorld().getName());
-        logger.debug("Now at block type: " + teleportLocation.getBlock().getType());
+        logger.info("Now in world {}", player.getWorld().getName());
+        logger.debug("Now at block type: {}", teleportLocation.getBlock().getType());
 
         // Add world to active worlds
         activeWorlds.put(nextWorld.getName(), nextWorld);
@@ -111,8 +99,6 @@ public class MinecraftListener implements Listener {
         world.setGameRule(GameRule.DO_WEATHER_CYCLE, false);
         world.setGameRule(GameRule.NATURAL_REGENERATION, false);
         world.setBiome(0,0, Biome.PLAINS);
-
-        //loadPrebuiltStructure("/home/ca/Documents/Hiwi_Minecraft/spigot-plugin/worldtest/src/main/resources/prebuilt_structures/orange_cube.csv", world);
     }
 
     @EventHandler
@@ -124,7 +110,7 @@ public class MinecraftListener implements Listener {
         Location chunkLocation = new Location(world, x, 0, z);
         WorldBorder border = world.getWorldBorder();
         if (!border.isInside(chunkLocation)){
-            logger.info("ChunkLoadEvent cancelled " + x + z);
+            logger.info("ChunkLoadEvent cancelled {} {}", x, z);
             chunk.unload();
         }
     }
@@ -144,9 +130,9 @@ public class MinecraftListener implements Listener {
     @EventHandler
     public void onBlockPlaced(BlockPlaceEvent event){
         Block block = event.getBlock();
-        logger.info("Block was placed with name " + block.getType().name() + " " + block.getType().ordinal());
+        logger.info("Block was placed with type {} {}", block.getType().name(), block.getType().ordinal());
 
-        logger.info("Biome is " + event.getPlayer().getWorld().getBiome(0,0));
+        logger.info("Biome is {}", event.getPlayer().getWorld().getBiome(0,0));
     }
 
     @EventHandler
@@ -154,12 +140,12 @@ public class MinecraftListener implements Listener {
         Block block = event.getBlock();
         Player player = event.getPlayer();
         // Don't destroy the bedrock layer
-        if (block.getY() <= 1){
+        if (block.getY() <= 1){  // TODO: add check for type=BEDROCK ?
             event.setCancelled(true);
             player.sendMessage("You cannot destroy this");
             return;
         }
-        logger.info("Block was destroyed with name " + block.getType().name() + " " + block.getType().ordinal());
+        logger.info("Block was destroyed with type {} {}", block.getType().name(), block.getType().ordinal());
     }
 
     @EventHandler
@@ -171,12 +157,12 @@ public class MinecraftListener implements Listener {
     public void onWorldLoadEvent(WorldLoadEvent event){
         World world = event.getWorld();
         prepareWorld(world);
-        logger.info("World was loaded " + world.getName());
+        logger.info("World was loaded {}", world.getName());
     }
 
     @EventHandler
     public void onWeatherChange(WeatherChangeEvent event){
-        logger.info("Attempted Weather Change to " + event.toWeatherState());
+        logger.info("Attempted Weather Change to {}", event.toWeatherState());
         if (event.toWeatherState()) {  // would change to raining, thunder is already disabled
             event.setCancelled(true);
         }
@@ -243,51 +229,6 @@ public class MinecraftListener implements Listener {
     }
 
     /**
-     * Reads blocks from a file and creates them in the given world.
-     * @param filename: csv-file of the line structure: x,y,z,block type name
-     * @param world: the world where the structure should be build
-     */
-    private void loadPrebuiltStructure(String filename, World world){
-        BufferedReader br = null;
-        try {
-            br = new BufferedReader(new FileReader(filename));
-            String line;
-            while ((line = br.readLine()) != null) {
-                // skip comments
-                if (line.startsWith("#")){
-                    continue;
-                }
-                // use comma as separator
-                String[] blockInfo = line.split(",");
-                int x = Integer.parseInt(blockInfo[0]);
-                int y = Integer.parseInt(blockInfo[1]);
-                int z = Integer.parseInt(blockInfo[2]);
-                String typeName = blockInfo[3];
-                // int type = Integer.parseInt(blockInfo[3]);
-
-                Location location = new Location(world, x, y, z);
-                Material newMaterial = Material.getMaterial(typeName);
-                if (newMaterial == null){
-                    logger.error(typeName + " is not a valid Material. Skipped.");
-                } else {
-                    location.getBlock().setType(newMaterial);
-                }
-            }
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            if (br != null) {
-                try {
-                    br.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-    }
-
-    /**
      * Saves all non-air blocks above the ground from a world to a csv-file.
      * @param filename: csv-file where the blocks should be saved
      * @param world:
@@ -312,7 +253,7 @@ public class MinecraftListener implements Listener {
                     if (!currentBlock.getType().isAir()){
                         toSave.add(currentBlock);
                         foundSolid = true;
-                        logger.debug("Adding to save set " + currentBlock);
+                        logger.debug("Adding to save set {}", currentBlock);
                     }
                 }
             }
@@ -323,7 +264,7 @@ public class MinecraftListener implements Listener {
         for (Block block:toSave){
             String line = String.format("%d,%d,%d,", block.getX(), block.getY(), block.getZ()) + block.getType().name();
             pw.println(line);
-            logger.info("Saved: " + line);
+            logger.info("Saved: {}", line);
         }
         pw.flush();
     }
