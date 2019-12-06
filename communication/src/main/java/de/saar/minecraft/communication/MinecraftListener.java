@@ -28,7 +28,7 @@ public class MinecraftListener implements Listener {
     MinecraftClient client;
     WorldCreator creator;
     World nextWorld;  // Preloaded world for the next joining player
-    HashMap<String, World> activeWorlds = new HashMap<String, World>();
+    HashMap<String, World> activeWorlds = new HashMap<>();
 
     MinecraftListener(MinecraftClient client) {
         super();
@@ -49,7 +49,7 @@ public class MinecraftListener implements Listener {
     public void onPlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
         String playerName = player.getDisplayName();
-        String structureFile = "";
+        String structureFile;
         try {
             structureFile = client.registerGame(playerName);
         } catch (UnknownHostException e){
@@ -136,10 +136,8 @@ public class MinecraftListener implements Listener {
         int gameId = client.getGameIdForPlayer(player.getName());
         logger.debug("gameId {} coordinates {}-{}-{}", gameId, block.getX(), block.getY(), block.getZ());
         String message = client.sendBlockPlaced(gameId, block.getX(), block.getY(), block.getZ(), block.getType().ordinal());
-        String[] parts = message.split(":");
-        int id = Integer.parseInt(parts[1]);
-        Material m = Material.values()[id];
-        player.sendMessage(parts[0] + m.toString());
+        logger.info("Message to {}: {}", player.getName(), message);
+        player.sendMessage(message);
     }
 
     @EventHandler
@@ -156,11 +154,8 @@ public class MinecraftListener implements Listener {
         
         int gameId = client.getGameIdForPlayer(player.getName());
         String message = client.sendBlockDestroyed(gameId, block.getX(), block.getY(), block.getZ(), block.getType().ordinal());
-        logger.info(message);
-        String[] parts = message.split(":");
-        int id = Integer.parseInt(parts[1]);
-        Material m = Material.values()[id];
-        player.sendMessage(parts[0] + m.toString());
+        logger.info("Message to {}: {}", player.getName(), message);
+        player.sendMessage(message);
     }
 
     // TODO: what if block is not broken but just damaged?
@@ -214,7 +209,6 @@ public class MinecraftListener implements Listener {
                 int y = Integer.parseInt(blockInfo[1]);
                 int z = Integer.parseInt(blockInfo[2]);
                 String typeName = blockInfo[3];
-                // int type = Integer.parseInt(blockInfo[3]);
 
                 Location location = new Location(world, x, y, z);
                 Material newMaterial = Material.getMaterial(typeName);
