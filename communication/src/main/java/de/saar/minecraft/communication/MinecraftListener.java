@@ -1,5 +1,7 @@
 package de.saar.minecraft.communication;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.bukkit.*;
 import org.bukkit.block.Biome;
 import org.bukkit.block.Block;
@@ -17,17 +19,16 @@ import org.bukkit.event.world.StructureGrowEvent;
 import org.bukkit.event.world.WorldLoadEvent;
 
 import java.io.*;
-import java.net.URL;
+import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.HashSet;
 
 public class MinecraftListener implements Listener {
-
+    private static Logger logger = LogManager.getLogger(MinecraftListener.class);
     MinecraftClient client;
     WorldCreator creator;
     World nextWorld;  // Preloaded world for the next joining player
-
-    HashMap<String, World> activeWorlds = new HashMap<String, World>();
+    HashMap<String, World> activeWorlds = new HashMap<>();
 
     MinecraftListener(MinecraftClient client) {
         super();
@@ -41,36 +42,52 @@ public class MinecraftListener implements Listener {
         creator.generateStructures(false);
         nextWorld = creator.createWorld();
         prepareWorld(nextWorld);
-        System.out.println("World was created and prepared " + nextWorld.getName());
+        logger.info("World was created and prepared {}", nextWorld.getName());
     }
 
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
         String playerName = player.getDisplayName();
-        String structureFile = client.registerGame(playerName);
+        String structureFile;
+        try {
+            structureFile = client.registerGame(playerName);
+        } catch (UnknownHostException e){
+            player.sendMessage("You could not connect to the experiment server");  // TODO: display exception details or not?
+            logger.error("Player {} could not connect: {}", playerName, e);
+            return;
+        }
         player.sendMessage("Welcome to the server, " + playerName);
-        System.out.println(structureFile);
+
         // Get correct structure file
-//        String filename = "prebuilt_structures/" + structureFile + ".csv";
-//        URL tmp = getClass().getResource(filename);
-//        File file = null;
-//        if (tmp != null){
-//            file = new File(tmp.getFile());
-//        }
-//
-//        if (file != null) {
-//            loadPrebuiltStructure(file, nextWorld);
-//        } else {
-//            System.out.println("File not found " + filename);
-//        }
+        String filename = String.format("/de/saar/minecraft/worlds/%s.csv", structureFile);
+        InputStream in = MinecraftListener.class.getResourceAsStream(filename);
+        if (in != null) {
+            BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+            try {
+                loadPrebuiltStructure(reader, nextWorld);
+                logger.info("Loaded structure: {}", filename);
+            } catch (IOException e){
+                logger.error("World file could not be loaded: {} {}", filename, e);
+                player.sendMessage("World file could not be loaded");
+                // TODO: notify broker that set-up is wrong
+            }
+        } else {
+            logger.error("World file is not found: {}", filename);
+            player.sendMessage("World file is not found");
+            // TODO: notify broker that set-up is wrong
+        }
 
         // Teleport player to own world
         Location teleportLocation = nextWorld.getSpawnLocation();
         boolean worked = player.teleport(teleportLocation);
-        System.out.format("Teleportation worked %b", worked);
-        System.out.println("Now in world " + player.getWorld().getName());
-        System.out.println("Now at block type: " + teleportLocation.getBlock().getType());
+        if (!worked){
+            logger.error("Teleportation failed");
+            player.sendMessage("Teleportation failed");
+            // TODO: notify broker that the player is in the wrong world
+        }
+        logger.info("Now in world {}", player.getWorld().getName());
+        logger.debug("Now at block type: {}", teleportLocation.getBlock().getType());
 
         // Add world to active worlds
         activeWorlds.put(nextWorld.getName(), nextWorld);
@@ -88,6 +105,9 @@ public class MinecraftListener implements Listener {
      * @param world
      */
     private void prepareWorld(World world){
+        // Only positive coordinates with chunk size 16
+        world.getWorldBorder().setCenter(world.getSpawnLocation());
+        world.getWorldBorder().setSize(32);
         world.setThundering(false);
         world.setSpawnFlags(false, false);
         world.setDifficulty(Difficulty.PEACEFUL);
@@ -97,10 +117,6 @@ public class MinecraftListener implements Listener {
         world.setGameRule(GameRule.DO_WEATHER_CYCLE, false);
         world.setGameRule(GameRule.NATURAL_REGENERATION, false);
         world.setBiome(0,0, Biome.PLAINS);
-
-        // Set initial blue block as orientation for planner and NLG
-//        Location anchor = new Location(world,2,2,2);
-//        anchor.getBlock().setType(Material.BLUE_WOOL);
     }
 
     @EventHandler
@@ -113,17 +129,15 @@ public class MinecraftListener implements Listener {
     @EventHandler
     public void onBlockPlaced(BlockPlaceEvent event){
         Block block = event.getBlock();
-        System.out.println("Block was placed with name " + block.getType().name() + " " + block.getType().ordinal());
+        logger.info("Block was placed with type {} {}", block.getType().name(), block.getType().ordinal());
 
 
         Player player = event.getPlayer();
         int gameId = client.getGameIdForPlayer(player.getName());
-        System.out.println(gameId + " " + block.getX() + " " + block.getY() + " " + block.getZ());
+        logger.debug("gameId {} coordinates {}-{}-{}", gameId, block.getX(), block.getY(), block.getZ());
         String message = client.sendBlockPlaced(gameId, block.getX(), block.getY(), block.getZ(), block.getType().ordinal());
-        String[] parts = message.split(":");
-        int id = Integer.parseInt(parts[1]);
-        Material m = Material.values()[id];
-        player.sendMessage(parts[0] + m.toString());
+        logger.info("Message to {}: {}", player.getName(), message);
+        player.sendMessage(message);
     }
 
     @EventHandler
@@ -131,20 +145,17 @@ public class MinecraftListener implements Listener {
         Block block = event.getBlock();
         Player player = event.getPlayer();
         // Don't destroy the bedrock layer
-        if (block.getY() <= 1){
+        if (block.getY() <= 1){  // TODO: add check for type=BEDROCK ?
             event.setCancelled(true);
             player.sendMessage("You cannot destroy this");
             return;
         }
-        System.out.println("Block was destroyed with name " + block.getType().name() + " " + block.getType().ordinal());
+        logger.info("Block was destroyed with type {} {}", block.getType().name(), block.getType().ordinal());
         
         int gameId = client.getGameIdForPlayer(player.getName());
         String message = client.sendBlockDestroyed(gameId, block.getX(), block.getY(), block.getZ(), block.getType().ordinal());
-        System.out.println(message);
-        String[] parts = message.split(":");
-        int id = Integer.parseInt(parts[1]);
-        Material m = Material.values()[id];
-        player.sendMessage(parts[0] + m.toString());
+        logger.info("Message to {}: {}", player.getName(), message);
+        player.sendMessage(message);
     }
 
     // TODO: what if block is not broken but just damaged?
@@ -157,12 +168,12 @@ public class MinecraftListener implements Listener {
     public void onWorldLoadEvent(WorldLoadEvent event){
         World world = event.getWorld();
         prepareWorld(world);
-        System.out.println("World was loaded " + world.getName());
+        logger.info("World was loaded {}", world.getName());
     }
 
     @EventHandler
     public void onWeatherChange(WeatherChangeEvent event){
-        System.out.println("Attempted Weather Change to " + event.toWeatherState());
+        logger.info("Attempted Weather Change to {}", event.toWeatherState());
         if (event.toWeatherState()) {  // would change to raining, thunder is already disabled
             event.setCancelled(true);
         }
@@ -180,17 +191,16 @@ public class MinecraftListener implements Listener {
 
     /**
      * Reads blocks from a file and creates them in the given world.
-     * @param file: csv-file of the line structure: x,y,z,block type name
-     * @param world: the world where the structure should be build
+     * @param reader: BufferedReader for a csv-file of the line structure: x,y,z,block type name
+     * @param world: the world where the structure should be built
+     * @throws IOException
      */
-    private void loadPrebuiltStructure(File file, World world){
-        BufferedReader br = null;
-        try {
-            br = new BufferedReader(new FileReader(file));
+    private void loadPrebuiltStructure(BufferedReader reader, World world) throws IOException {
+        try (reader) {
             String line;
-            while ((line = br.readLine()) != null) {
+            while ((line = reader.readLine()) != null) {
                 // skip comments
-                if (line.startsWith("#")){
+                if (line.startsWith("#")) {
                     continue;
                 }
                 // use comma as separator
@@ -199,27 +209,20 @@ public class MinecraftListener implements Listener {
                 int y = Integer.parseInt(blockInfo[1]);
                 int z = Integer.parseInt(blockInfo[2]);
                 String typeName = blockInfo[3];
-                // int type = Integer.parseInt(blockInfo[3]);
 
                 Location location = new Location(world, x, y, z);
                 Material newMaterial = Material.getMaterial(typeName);
-                if (newMaterial == null){
-                    System.out.println(typeName + " is not a valid Material. Skipped.");
+                if (newMaterial == null) {
+                    logger.error(typeName + " is not a valid Material.");
+                    throw new IOException(typeName + " is not a valid Material.");
                 } else {
                     location.getBlock().setType(newMaterial);
                 }
             }
 
         } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            if (br != null) {
-                try {
-                    br.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
+            e.printStackTrace();  // TODO: log with logger not to standard error
+            throw e;
         }
     }
 
@@ -248,7 +251,7 @@ public class MinecraftListener implements Listener {
                     if (!currentBlock.getType().isAir()){
                         toSave.add(currentBlock);
                         foundSolid = true;
-                        System.out.println(currentBlock);
+                        logger.debug("Adding to save set {}", currentBlock);
                     }
                 }
             }
@@ -259,7 +262,7 @@ public class MinecraftListener implements Listener {
         for (Block block:toSave){
             String line = String.format("%d,%d,%d,", block.getX(), block.getY(), block.getZ()) + block.getType().name();
             pw.println(line);
-            System.out.println(line);
+            logger.info("Saved: {}", line);
         }
         pw.flush();
     }

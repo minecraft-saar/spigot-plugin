@@ -1,25 +1,22 @@
 package de.saar.minecraft.communication;
 
-import org.bukkit.Server;
-import org.bukkit.World;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.bukkit.entity.Player;
 import org.bukkit.generator.ChunkGenerator;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitScheduler;
 import org.bukkit.Location;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
 
 public class CommunicationPlugin extends JavaPlugin{
 
     MinecraftClient client;
+    private static Logger logger = LogManager.getLogger(CommunicationPlugin.class);
 
     // Fired when plugin is first enabled
     @Override
     public void onEnable() {
-        System.out.println("Trying to enable CommunicationPlugin");
         client = new MinecraftClient("localhost", 2802);
         getServer().getPluginManager().registerEvents(new MinecraftListener(client), this);
 
@@ -40,7 +37,7 @@ public class CommunicationPlugin extends JavaPlugin{
     }
 
     public void getAllPlayerPositions(){
-        System.out.println(client.getActiveGames().toString());
+        logger.debug(client.getActiveGames().toString());
         for (Player player: getServer().getOnlinePlayers()){
             String playerName = player.getName();
             int gameId = client.getGameIdForPlayer(playerName);

@@ -9,7 +9,7 @@ plugins {
 group 'de.saar.minecraft.spigot-plugin'
 description 'communication'
 
-version '1.0-SNAPSHOT'
+version '1.1-SNAPSHOT'
 
 sourceCompatibility = 1.11
 
@@ -33,4 +33,6 @@ dependencies {
     implementation "com.google.protobuf:protobuf-java:3.9.0"
     implementation "io.grpc:grpc-all:1.23.0"
     compile group: "de.saar.minecraft.infrastructure", name:"networking", version:"1.1.4"
+    compile group: 'org.apache.logging.log4j', name: 'log4j-core', version: '2.8.2'
+    compile 'de.saar.minecraft:shared-resources:1.1.1'
 }

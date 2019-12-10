@@ -1,0 +1,26 @@
+{
+    "configuration": {
+        "status": "error",
+        "name": "JSONConfigDemo",
+        "packages": "de.saar.minecraft",
+        "ThresholdFilter": {
+            "level": "info"
+        },
+        "appenders": {
+            "Console": {
+                "name": "STDERR",
+                "PatternLayout": {
+                    "pattern": "%d [%t] %-5p %c - %m%n"
+                }
+            }
+        },
+        "loggers": {
+            "root": {
+                "level": "info",
+                "AppenderRef": {
+                    "ref": "STDERR"
+                }
+            }
+        }
+    }
+}
