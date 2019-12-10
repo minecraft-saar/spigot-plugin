@@ -16,5 +16,5 @@ jobs:
     - name: Build with Gradle
       env:
         GPR_USER: x-access-token
-        GPR_API_KEY: ${{ secrets.GITHUB_TOKEN }}
+        GPR_API_KEY: ${{ secrets.BOT_TOKEN }}
       run: wget https://hub.spigotmc.org/jenkins/job/BuildTools/lastSuccessfulBuild/artifact/target/BuildTools.jar && java -jar BuildTools.jar --rev 1.14.4 && cd communication && ./gradlew build
