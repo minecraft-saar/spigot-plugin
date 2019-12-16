@@ -1,5 +1,6 @@
 package de.saar.minecraft.communication;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bukkit.*;
@@ -17,6 +18,7 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.weather.WeatherChangeEvent;
 import org.bukkit.event.world.StructureGrowEvent;
 import org.bukkit.event.world.WorldLoadEvent;
+import org.bukkit.event.world.WorldUnloadEvent;
 
 import java.io.*;
 import java.net.UnknownHostException;
@@ -29,6 +31,7 @@ public class MinecraftListener implements Listener {
     WorldCreator creator;
     World nextWorld;  // Preloaded world for the next joining player
     HashMap<String, World> activeWorlds = new HashMap<>();
+    int worldCounter = 0;
 
     MinecraftListener(MinecraftClient client) {
         super();
@@ -93,7 +96,7 @@ public class MinecraftListener implements Listener {
         activeWorlds.put(nextWorld.getName(), nextWorld);
 
         // Create new preloaded world for the next player
-        String worldName = "playerworld_" + activeWorlds.size();
+        String worldName = "playerworld_" + worldCounter++;
         creator = new WorldCreator(worldName);
         creator.generator(new FlatChunkGenerator());
         creator.generateStructures(false);
@@ -124,6 +127,33 @@ public class MinecraftListener implements Listener {
         event.getQuitMessage();
         int gameId = client.getGameIdForPlayer(event.getPlayer().getName());  // TODO: which of the player names?
         client.finishGame(gameId);
+
+        Player player = event.getPlayer();
+        World world = player.getWorld();
+        World baseWorld = Bukkit.getWorld("world");
+        player.teleport(baseWorld.getSpawnLocation());  // Teleport player away so the world can be unloaded now; Alternative: only unload the world after the PlayerQuit Event is executed
+        logger.debug("Entities {}", world.getEntities().toString());
+        boolean isUnloaded = Bukkit.unloadWorld(world, false);
+        logger.info("World {} is unloaded: {}", world.getName(), isUnloaded);
+        activeWorlds.remove(world.getName());
+        logger.info("Active worlds {}", activeWorlds.toString());
+        logger.info("worlds bukkit {}", Bukkit.getWorlds().toString());
+    }
+
+    @EventHandler
+    public void onWorldUnload(WorldUnloadEvent event){
+        World world = event.getWorld();
+        // Delete files from disk
+        String dirName = world.getName();
+        logger.info("world dir {}", dirName);
+        File f = new File(dirName);
+        logger.info("Path {}", f.getAbsolutePath());
+        try {
+            FileUtils.deleteDirectory(f);
+            logger.info("deleted");
+        } catch (IOException e){
+            logger.error(e.getMessage());
+        }
     }
 
     @EventHandler
