@@ -19,13 +19,15 @@ import java.util.List;
 public class CommunicationPlugin extends JavaPlugin{
 
     MinecraftClient client;
+    MinecraftListener listener;
     private static Logger logger = LogManager.getLogger(CommunicationPlugin.class);
 
     // Fired when plugin is first enabled
     @Override
     public void onEnable() {
         client = new MinecraftClient("localhost", 2802);
-        getServer().getPluginManager().registerEvents(new MinecraftListener(client), this);
+        listener = new MinecraftListener(client);
+        getServer().getPluginManager().registerEvents(listener, this);
 
         // to get player position
         BukkitScheduler positionScheduler = getServer().getScheduler();
@@ -43,22 +45,11 @@ public class CommunicationPlugin extends JavaPlugin{
         // Unload remaining worlds
         List<World> remainingWorlds = getServer().getWorlds();
         for (World world: remainingWorlds) {
-            boolean isUnloaded = Bukkit.unloadWorld(world, false);  // onWorldUnload is not called because Listener is already disabled
-            // Remove only unloaded worlds
-            if (isUnloaded) {  // Don't delete files for main world "world"
-                // Delete files from disk
-                String dirName = world.getName();
-                logger.info("world dir {}", dirName);
-                File f = new File(dirName);
-                logger.info("Path {}", f.getAbsolutePath());
-                try {
-                    FileUtils.deleteDirectory(f);
-                    logger.info("deleted");
-                } catch (IOException e) {
-                    logger.error(e.getMessage());
-                }
-            }
-            logger.info("{} is unloaded: {}", world.getName(), isUnloaded);
+            listener.deleteWorld(world);
+        }
+        // Finish all remaining games
+        for (int gameId: client.getActiveGames().values()){
+            client.finishGame(gameId);
         }
     }
 

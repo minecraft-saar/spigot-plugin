@@ -130,19 +130,37 @@ public class MinecraftListener implements Listener {
 
         Player player = event.getPlayer();
         World world = player.getWorld();
-        World baseWorld = Bukkit.getWorld("world");
-        player.teleport(baseWorld.getSpawnLocation());  // Teleport player away so the world can be unloaded now; Alternative: only unload the world after the PlayerQuit Event is executed
-        logger.debug("Entities {}", world.getEntities().toString());
-        boolean isUnloaded = Bukkit.unloadWorld(world, false);
-        logger.info("World {} is unloaded: {}", world.getName(), isUnloaded);
+        deleteWorld(world);
+
         activeWorlds.remove(world.getName());
         logger.info("Active worlds {}", activeWorlds.toString());
         logger.info("worlds bukkit {}", Bukkit.getWorlds().toString());
     }
 
-    @EventHandler
-    public void onWorldUnload(WorldUnloadEvent event){
-        World world = event.getWorld();
+    public boolean deleteWorld(World world) {
+        // Check unloading preconditions
+        if (world == null){
+            return false;
+        }
+        // TODO: do non-player entities prevent world unloading?
+        if (world.getPlayers().size() > 0){
+            // teleport all entities to the base world
+            World baseWorld = Bukkit.getWorld("world");
+            Location baseLocation = baseWorld.getSpawnLocation();
+            // Teleport player away so the world can be unloaded now; Alternative: only unload the world after the PlayerQuit Event is executed
+            for (Player player: world.getPlayers()){
+                player.teleport(baseLocation);
+                player.sendMessage("Your world was deleted. Please log out.");
+            }
+        }
+        // unload world
+        logger.debug("Entities {}", world.getEntities().toString());
+        boolean isUnloaded = Bukkit.unloadWorld(world, false);
+        logger.info("World {} is unloaded: {}", world.getName(), isUnloaded);
+        if (!isUnloaded){
+            return false;
+        }
+
         // Delete files from disk
         String dirName = world.getName();
         logger.info("world dir {}", dirName);
@@ -153,8 +171,26 @@ public class MinecraftListener implements Listener {
             logger.info("deleted");
         } catch (IOException e){
             logger.error(e.getMessage());
+            return false;
         }
+        return true;
     }
+
+//    @EventHandler
+//    public void onWorldUnload(WorldUnloadEvent event){
+//        World world = event.getWorld();
+//        // Delete files from disk
+//        String dirName = world.getName();
+//        logger.info("world dir {}", dirName);
+//        File f = new File(dirName);
+//        logger.info("Path {}", f.getAbsolutePath());
+//        try {
+//            FileUtils.deleteDirectory(f);
+//            logger.info("deleted");
+//        } catch (IOException e){
+//            logger.error(e.getMessage());
+//        }
+//    }
 
     @EventHandler
     public void onBlockPlaced(BlockPlaceEvent event){
