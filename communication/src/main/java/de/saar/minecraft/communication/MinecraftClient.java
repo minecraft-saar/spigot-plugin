@@ -13,10 +13,9 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
-public class MinecraftClient {
+public class MinecraftClient implements Client{
 
     private final ManagedChannel channel;
     private BrokerGrpc.BrokerBlockingStub blockingStub;
@@ -102,11 +101,11 @@ public class MinecraftClient {
         return result.toString();
     }
 
-    int getGameIdForPlayer(String playerName){
+    public int getGameIdForPlayer(String playerName){
         return this.activeGames.get(playerName);
     }
 
-    HashMap<String, Integer> getActiveGames(){
+    public HashMap<String, Integer> getActiveGames(){
         return this.activeGames;
     }
 

@@ -18,7 +18,6 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.weather.WeatherChangeEvent;
 import org.bukkit.event.world.StructureGrowEvent;
 import org.bukkit.event.world.WorldLoadEvent;
-import org.bukkit.event.world.WorldUnloadEvent;
 
 import java.io.*;
 import java.net.UnknownHostException;
@@ -27,13 +26,13 @@ import java.util.HashSet;
 
 public class MinecraftListener implements Listener {
     private static Logger logger = LogManager.getLogger(MinecraftListener.class);
-    MinecraftClient client;
+    Client client;
     WorldCreator creator;
     World nextWorld;  // Preloaded world for the next joining player
     HashMap<String, World> activeWorlds = new HashMap<>();
     int worldCounter = 0;
 
-    MinecraftListener(MinecraftClient client) {
+    MinecraftListener(Client client) {
         super();
         if (client == null){
             throw new RuntimeException("No client was passed to the Listener");
@@ -176,27 +175,10 @@ public class MinecraftListener implements Listener {
         return true;
     }
 
-//    @EventHandler
-//    public void onWorldUnload(WorldUnloadEvent event){
-//        World world = event.getWorld();
-//        // Delete files from disk
-//        String dirName = world.getName();
-//        logger.info("world dir {}", dirName);
-//        File f = new File(dirName);
-//        logger.info("Path {}", f.getAbsolutePath());
-//        try {
-//            FileUtils.deleteDirectory(f);
-//            logger.info("deleted");
-//        } catch (IOException e){
-//            logger.error(e.getMessage());
-//        }
-//    }
-
     @EventHandler
     public void onBlockPlaced(BlockPlaceEvent event){
         Block block = event.getBlock();
         logger.info("Block was placed with type {} {}", block.getType().name(), block.getType().ordinal());
-
 
         Player player = event.getPlayer();
         int gameId = client.getGameIdForPlayer(player.getName());

@@ -1,4 +1,4 @@
-main: de.saar.minecraft.worldtest.WorldTestPlugin
+main: de.saar.minecraft.communication.WorldTestPlugin
 name: WorldTestPlugin
 version: 1.0.0
 description: Experiments for spigot modifications
