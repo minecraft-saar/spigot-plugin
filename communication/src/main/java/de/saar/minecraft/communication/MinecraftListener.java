@@ -21,8 +21,10 @@ import org.bukkit.event.world.WorldLoadEvent;
 
 import java.io.*;
 import java.net.UnknownHostException;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Objects;
 
 public class MinecraftListener implements Listener {
     private static Logger logger = LogManager.getLogger(MinecraftListener.class);
@@ -38,6 +40,18 @@ public class MinecraftListener implements Listener {
             throw new RuntimeException("No client was passed to the Listener");
         }
         this.client = client;
+
+        // remove all potentially existing player worlds
+//        File directory = new File("");
+        File directory = Paths.get(".").toAbsolutePath().normalize().toFile();
+        logger.info(directory.toString());
+        logger.info(directory.getAbsolutePath());
+        for (File f : Objects.requireNonNull(directory.listFiles())) {
+            logger.info("File {}", f.getName());
+            if (f.getName().startsWith("playerworld_")) {
+                f.delete();
+            }
+        }
 
         creator = new WorldCreator("playerworld_0");
         creator.generator(new FlatChunkGenerator());
@@ -193,7 +207,7 @@ public class MinecraftListener implements Listener {
         Block block = event.getBlock();
         Player player = event.getPlayer();
         // Don't destroy the bedrock layer
-        if (block.getY() <= 1){  // TODO: add check for type=BEDROCK ?
+        if ((block.getY() <= 1) && (block.getType() == Material.BEDROCK)){  // TODO: add check for type=BEDROCK ?
             event.setCancelled(true);
             player.sendMessage("You cannot destroy this");
             return;
