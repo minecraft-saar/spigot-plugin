@@ -59,7 +59,7 @@ public class CommunicationPlugin extends JavaPlugin{
             int yPos = (int)Math.round(playerLocation.getY());
             int zPos = (int)Math.round(playerLocation.getZ());
             String returnMessage = client.sendPlayerPosition(gameId, xPos, yPos, zPos);
-            getServer().getPlayer(playerName).sendMessage(returnMessage);  //alternativ: sendRawMessage
+            getServer().getPlayer(playerName).sendMessage(returnMessage);
         }
     }
 

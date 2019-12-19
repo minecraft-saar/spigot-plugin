@@ -42,14 +42,13 @@ public class MinecraftListener implements Listener {
         this.client = client;
 
         // remove all potentially existing player worlds
-//        File directory = new File("");
         File directory = Paths.get(".").toAbsolutePath().normalize().toFile();
         logger.info(directory.toString());
         logger.info(directory.getAbsolutePath());
         for (File f : Objects.requireNonNull(directory.listFiles())) {
             logger.info("File {}", f.getName());
             if (f.getName().startsWith("playerworld_")) {
-                f.delete();
+                f.delete();  // TODO: check if removing worked
             }
         }
 
@@ -109,7 +108,7 @@ public class MinecraftListener implements Listener {
         activeWorlds.put(nextWorld.getName(), nextWorld);
 
         // Create new preloaded world for the next player
-        String worldName = "playerworld_" + worldCounter++;
+        String worldName = "playerworld_" + ++worldCounter;
         creator = new WorldCreator(worldName);
         creator.generator(new FlatChunkGenerator());
         creator.generateStructures(false);
@@ -118,7 +117,7 @@ public class MinecraftListener implements Listener {
 
     /**
      * Sets all world settings to peaceful
-     * @param world
+     * @param world: a Minecraft World for a player
      */
     private void prepareWorld(World world){
         // Only positive coordinates with chunk size 16
@@ -150,15 +149,21 @@ public class MinecraftListener implements Listener {
         logger.info("worlds bukkit {}", Bukkit.getWorlds().toString());
     }
 
+    /**
+     * Delete a playerworld from both Minecraft and disk.
+     * @param world: a Minecraft World of a player
+     * @return true if the passed world could be deleted completely
+     */
     public boolean deleteWorld(World world) {
         // Check unloading preconditions
         if (world == null){
             return false;
         }
-        // TODO: do non-player entities prevent world unloading?
+
         if (world.getPlayers().size() > 0){
             // teleport all entities to the base world
             World baseWorld = Bukkit.getWorld("world");
+            assert baseWorld != null;
             Location baseLocation = baseWorld.getSpawnLocation();
             // Teleport player away so the world can be unloaded now; Alternative: only unload the world after the PlayerQuit Event is executed
             for (Player player: world.getPlayers()){
@@ -192,9 +197,13 @@ public class MinecraftListener implements Listener {
     @EventHandler
     public void onBlockPlaced(BlockPlaceEvent event){
         Block block = event.getBlock();
+        Player player = event.getPlayer();
+        if (block.getType() == Material.BEDROCK){
+            player.sendMessage("You cannot place Bedrock blocks");
+            event.setCancelled(true);
+        }
         logger.info("Block was placed with type {} {}", block.getType().name(), block.getType().ordinal());
 
-        Player player = event.getPlayer();
         int gameId = client.getGameIdForPlayer(player.getName());
         logger.debug("gameId {} coordinates {}-{}-{}", gameId, block.getX(), block.getY(), block.getZ());
         String message = client.sendBlockPlaced(gameId, block.getX(), block.getY(), block.getZ(), block.getType().ordinal());
@@ -207,7 +216,7 @@ public class MinecraftListener implements Listener {
         Block block = event.getBlock();
         Player player = event.getPlayer();
         // Don't destroy the bedrock layer
-        if ((block.getY() <= 1) && (block.getType() == Material.BEDROCK)){  // TODO: add check for type=BEDROCK ?
+        if (block.getType() == Material.BEDROCK){
             event.setCancelled(true);
             player.sendMessage("You cannot destroy this");
             return;
