@@ -43,11 +43,10 @@ public class MinecraftListener implements Listener {
 
         // remove all potentially existing player worlds
         File directory = Paths.get(".").toAbsolutePath().normalize().toFile();
-        logger.info(directory.toString());
-        logger.info(directory.getAbsolutePath());
+        logger.debug(directory.getAbsolutePath());
         for (File f : Objects.requireNonNull(directory.listFiles())) {
-            logger.info("File {}", f.getName());
             if (f.getName().startsWith("playerworld_")) {
+                logger.info("File {} to be deleted", f.getName());
                 f.delete();  // TODO: check if removing worked
             }
         }
@@ -73,6 +72,7 @@ public class MinecraftListener implements Listener {
             return;
         }
         player.sendMessage("Welcome to the server, " + playerName);
+        int gameId = client.getGameIdForPlayer(playerName);
 
         // Get correct structure file
         String filename = String.format("/de/saar/minecraft/worlds/%s.csv", structureFile);
@@ -84,13 +84,14 @@ public class MinecraftListener implements Listener {
                 logger.info("Loaded structure: {}", filename);
             } catch (IOException e){
                 logger.error("World file could not be loaded: {} {}", filename, e);
+                client.sendWorldFileError(gameId, "World file could not be loaded " + filename);
                 player.sendMessage("World file could not be loaded");
-                // TODO: notify broker that set-up is wrong
             }
         } else {
             logger.error("World file is not found: {}", filename);
+
+            client.sendWorldFileError(gameId, "World file is not found " + filename);
             player.sendMessage("World file is not found");
-            // TODO: notify broker that set-up is wrong
         }
 
         // Teleport player to own world
@@ -98,8 +99,8 @@ public class MinecraftListener implements Listener {
         boolean worked = player.teleport(teleportLocation);
         if (!worked){
             logger.error("Teleportation failed");
+            client.sendMinecraftServerError(gameId, String.format("Player is in wrong world: %s instead of %s", player.getWorld().getName(), nextWorld.getName()));
             player.sendMessage("Teleportation failed");
-            // TODO: notify broker that the player is in the wrong world
         }
         logger.info("Now in world {}", player.getWorld().getName());
         logger.debug("Now at block type: {}", teleportLocation.getBlock().getType());
@@ -284,7 +285,6 @@ public class MinecraftListener implements Listener {
                 Location location = new Location(world, x, y, z);
                 Material newMaterial = Material.getMaterial(typeName);
                 if (newMaterial == null) {
-                    logger.error(typeName + " is not a valid Material.");
                     throw new IOException(typeName + " is not a valid Material.");
                 } else {
                     location.getBlock().setType(newMaterial);

@@ -33,8 +33,8 @@ public class DummyMinecraftClient implements Client {
         logger.info(activeGames.toString());
     }
 
-    public String sendPlayerPosition(int gameId, int x, int y, int z){
-        return String.format("Your position is %d-%d-%d", x, y,z);
+    public String sendPlayerPosition(int gameId, int x, int y, int z, double xDir, double yDir, double zDir){
+        return String.format("Your position is %d-%d-%d looking in direction %d-%d-%d", x, y, z, xDir, yDir, zDir);
     }
 
     public int getGameIdForPlayer(String playerName){
@@ -52,5 +52,9 @@ public class DummyMinecraftClient implements Client {
     public String sendBlockDestroyed(int gameId, int x, int y, int z, int type){
         return String.format("A %d block was destroyed at %d-%d-%d", type, x, y, z);
     }
+
+    public void sendMinecraftServerError(int gameId, String message){};
+
+    public void sendWorldFileError(int gameId, String message){};
 
 }

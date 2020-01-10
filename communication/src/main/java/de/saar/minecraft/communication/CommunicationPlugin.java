@@ -8,6 +8,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.generator.ChunkGenerator;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitScheduler;
+import org.bukkit.util.Vector;
 
 import java.util.List;
 
@@ -58,7 +59,12 @@ public class CommunicationPlugin extends JavaPlugin{
             int xPos = (int)Math.round(playerLocation.getX());
             int yPos = (int)Math.round(playerLocation.getY());
             int zPos = (int)Math.round(playerLocation.getZ());
-            String returnMessage = client.sendPlayerPosition(gameId, xPos, yPos, zPos);
+            Vector direction = player.getEyeLocation().getDirection();
+            double xDir = direction.getX();
+            double yDir = direction.getY();
+            double zDir = direction.getZ();
+            System.out.println(direction);
+            String returnMessage = client.sendPlayerPosition(gameId, xPos, yPos, zPos, xDir, yDir, zDir);
             getServer().getPlayer(playerName).sendMessage(returnMessage);
         }
     }

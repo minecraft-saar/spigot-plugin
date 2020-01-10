@@ -50,7 +50,7 @@ public class MinecraftClient implements Client{
     }
 
     /**
-     * Registers a game with the broker. Returns a unique game ID for this game.
+     * Registers a game with the broker. Returns a world name.
      */
     public String registerGame(String playerName) throws UnknownHostException {
         String hostname = "localhost";
@@ -76,10 +76,13 @@ public class MinecraftClient implements Client{
         int gameId = mWorldSelect.getGameId();
         activeGames.put(playerName, gameId);
 
-        // todo load world type
         return mWorldSelect.getName();
     }
 
+    /**
+     * Unregisters a game with the broker.
+     * @param gameId: the unique game id of the game to be closed
+     */
     public void finishGame(int gameId) {
         activeGames.values().remove(gameId);
         logger.info(String.format("Removed player %d", gameId));
@@ -88,8 +91,8 @@ public class MinecraftClient implements Client{
         blockingStub.endGame(mGameId);  // TODO: what to do with the void return
     }
 
-    public String sendPlayerPosition(int gameId, int x, int y, int z){
-        StatusMessage position = StatusMessage.newBuilder().setGameId(gameId).setX(x).setY(y).setZ(z).build();
+    public String sendPlayerPosition(int gameId, int x, int y, int z, double xDir, double yDir, double zDir){
+        StatusMessage position = StatusMessage.newBuilder().setGameId(gameId).setX(x).setY(y).setZ(z).setXDirection(xDir).setYDirection(yDir).setZDirection(zDir).build();
         Iterator<TextMessage> messageStream = blockingStub.handleStatusInformation(position);
         StringBuilder result = new StringBuilder();
         for (; messageStream.hasNext(); ) {
@@ -109,7 +112,7 @@ public class MinecraftClient implements Client{
         return this.activeGames;
     }
 
-    public String sendBlockPlaced(int gameId, int x, int y, int z, int type){
+    public String sendBlockPlaced(int gameId, int x, int y, int z, int type) {
         BlockPlacedMessage message = BlockPlacedMessage.newBuilder().setGameId(gameId).setX(x).setY(y).setZ(z).setType(type).build();
         Iterator<TextMessage> messageStream = blockingStub.handleBlockPlaced(message);
         StringBuilder result = new StringBuilder();
@@ -120,7 +123,7 @@ public class MinecraftClient implements Client{
         return result.toString();
     }
 
-    public String sendBlockDestroyed(int gameId, int x, int y, int z, int type){
+    public String sendBlockDestroyed(int gameId, int x, int y, int z, int type) {
         BlockDestroyedMessage message = BlockDestroyedMessage.newBuilder().setGameId(gameId).setX(x).setY(y).setZ(z).setType(type).build();
         Iterator<TextMessage> messageStream = blockingStub.handleBlockDestroyed(message);
         StringBuilder result = new StringBuilder();
@@ -129,6 +132,16 @@ public class MinecraftClient implements Client{
             result.append(m.getText());
         }
         return result.toString();
+    }
+
+    public void sendMinecraftServerError(int gameId, String message) {
+        MinecraftServerError request = MinecraftServerError.newBuilder().setGameId(gameId).setMessage(message).build();
+        blockingStub.handleMinecraftServerError(request);
+    }
+
+    public void sendWorldFileError(int gameId, String message) {
+        WorldFileError request = WorldFileError.newBuilder().setGameId(gameId).setMessage(message).build();
+        blockingStub.handleWorldFileError(request);
     }
 
 
