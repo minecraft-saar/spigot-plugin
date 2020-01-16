@@ -12,6 +12,7 @@ import org.bukkit.event.block.BlockDamageEvent;
 import org.bukkit.event.block.BlockEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.player.*;
+import org.bukkit.scheduler.BukkitRunnable;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -23,14 +24,15 @@ import java.util.ArrayList;
 public class WOZListener implements Listener {
 
     private static Logger logger = LogManager.getLogger(WOZListener.class);
-//    WOZClient client;
+    private final WOZPlugin plugin;
     World displayWorld;
     Player player;
     boolean active = false;
     ArrayList<String> savedMessages = new ArrayList<>();
 
 
-    WOZListener() {
+    WOZListener(WOZPlugin plugin) {
+        this.plugin = plugin;
         WorldCreator creator = new WorldCreator("display_world");
         creator.generator(new FlatChunkGenerator());
         creator.generateStructures(false);
@@ -71,6 +73,10 @@ public class WOZListener implements Listener {
         active = true;
     }
 
+    public void startAsWizard(){
+
+    }
+
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent event){
         active = false;
@@ -98,7 +104,7 @@ public class WOZListener implements Listener {
     public void onPlayerMove(PlayerMoveEvent event) {
         event.getPlayer().sendMessage("You cannot walked around");
         event.setCancelled(true);
-    } //TODO: can a player turn their head without moving?
+    }
 
     @EventHandler
     public void onPlayerChat(AsyncPlayerChatEvent event){
@@ -106,25 +112,27 @@ public class WOZListener implements Listener {
         savedMessages.add(message);
     }
 
-    boolean loadWorld(String worldName){
+    void loadWorld(String worldName){
+
         String filename = String.format("/de/saar/minecraft/worlds/%s.csv", worldName);
         InputStream in = WOZArchitect.class.getResourceAsStream(filename);
         if (in != null) {
             BufferedReader reader = new BufferedReader(new InputStreamReader(in));
-            try {
-                loadPrebuiltStructure(reader, displayWorld);
-                logger.info("Loaded structure: {}", filename);
-            } catch (IOException e){
-                logger.error("World file could not be loaded: {} {}", filename, e);
-//                player.sendMessage("World file could not be loaded");
-                return false;
-            }
+            // Make Bukkit call in loadPrebuiltStructure synchronous in main thread
+            new BukkitRunnable() {
+                @Override
+                public void run() {
+                    try {
+                        loadPrebuiltStructure(reader, displayWorld);
+                        logger.info("Loaded structure: {}", filename);
+                    } catch (IOException e) {
+                        logger.error("World file could not be loaded: {} {}", filename, e);
+                    }
+                }
+            }.runTaskLater(this.plugin, 1);
         } else {
-            logger.error("World file is not found: {}", filename);
-//            player.sendMessage("World file is not found");
-            return false;
+            logger.error("World file is not found: {}", filename);;
         }
-        return true;
     }
 
     /**

@@ -28,7 +28,7 @@ public class WOZArchitect implements Architect {
         String worldName = request.getName();
         logger.info("Got world " + worldName);
         listener.loadWorld(worldName);
-
+        listener.player.sendMessage("You can begin giving instructions.");
     }
 
     @Override
