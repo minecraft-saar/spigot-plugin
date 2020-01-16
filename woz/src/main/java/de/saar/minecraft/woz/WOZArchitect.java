@@ -6,12 +6,7 @@ import io.grpc.stub.StreamObserver;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bukkit.Material;
-import org.bukkit.event.player.AsyncPlayerChatEvent;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 
 public class WOZArchitect implements Architect {
     private int waitTime;
@@ -46,17 +41,21 @@ public class WOZArchitect implements Architect {
             @Override
             public void run() {
                 //TODO
-                String text = "ok";
-                TextMessage mText = TextMessage.newBuilder().setGameId(gameId).setText(text).build();
+                listener.movePlayer(x,y,z,xDir,yDir,zDir);
+                listener.player.sendMessage("Next instruction: ");
 
-                // delay for a bit
+                // delay for a bit, so the wizard has time to type
                 try {
                     Thread.sleep(waitTime);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
+                // TODO: wait for the wizard to hit enter, then continue. If they don't hit enter in x seconds send empty message
 
-                // send the text message back to the client
+                String text = String.join(". ", listener.savedMessages);
+                listener.savedMessages.clear();
+                TextMessage mText = TextMessage.newBuilder().setGameId(gameId).setText(text).build();
+
                 responseObserver.onNext(mText);
                 responseObserver.onCompleted();
             }
@@ -76,7 +75,8 @@ public class WOZArchitect implements Architect {
             @Override
             public void run() {
                 Material material = Material.values()[type];
-                listener.displayWorld.getBlockAt(x,y,z).setType(material);
+                listener.placeBlock(x,y,z,material);
+                logger.info("{} block placed at {}-{}-{}", material, x, y, z);
                 listener.player.sendMessage("Next instruction: ");
 
                 // delay for a bit, so the wizard has time to type
@@ -90,8 +90,8 @@ public class WOZArchitect implements Architect {
                 String text = String.join(". ", listener.savedMessages);
                 listener.savedMessages.clear();
 
-//                String text = String.format("A block was just placed at %d-%d-%d :%d", x, y, z, type);
                 TextMessage mText = TextMessage.newBuilder().setGameId(gameId).setText(text).build();
+                logger.info("Send message: " + text);
 
                 // send the text message back to the client
                 responseObserver.onNext(mText);
@@ -113,17 +113,23 @@ public class WOZArchitect implements Architect {
         new Thread() {
             @Override
             public void run() {
-                String text = String.format("A block was just destroyed at %d-%d-%d :%d", x, y, z, type);
-                TextMessage mText = TextMessage.newBuilder().setGameId(gameId).setText(text).build();
+                listener.breakBlock(x, y, z);
 
-                // delay for a bit
+                listener.player.sendMessage("Next instruction: ");
+
+                // delay for a bit, so the wizard has time to type
                 try {
                     Thread.sleep(waitTime);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
+                // TODO: wait for the wizard to hit enter, then continue. If they don't hit enter in x seconds send empty message
 
-                // send the text message back to the client
+                String text = String.join(". ", listener.savedMessages);
+                listener.savedMessages.clear();
+
+                TextMessage mText = TextMessage.newBuilder().setGameId(gameId).setText(text).build();
+
                 responseObserver.onNext(mText);
                 responseObserver.onCompleted();
             }

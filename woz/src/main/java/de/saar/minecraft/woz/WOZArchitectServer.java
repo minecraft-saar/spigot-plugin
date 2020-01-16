@@ -42,7 +42,7 @@ public class WOZArchitectServer {
             }
         });
 
-        System.err.printf("Architect server running on port %d.\n", port);
+        logger.info("Architect server running on port {}", port);
     }
 
     public void stop() {
@@ -73,19 +73,19 @@ public class WOZArchitectServer {
 
         public void startGame(WorldSelectMessage request, StreamObserver<Void> responseObserver) {
             if (arch == null) {
-                arch = new WOZArchitect(5000, listener);
+                arch = new WOZArchitect(10000, listener);
             }
             arch.initialize(request);
 
             responseObserver.onNext(Void.newBuilder().build());
             responseObserver.onCompleted();
 
-            System.err.printf("architect for id %d: %s\n", request.getGameId(), arch);
+            logger.info("architect for id {}: {}", request.getGameId(), arch.getArchitectInformation());
         }
 
 
         public void endGame(GameId request, StreamObserver<Void> responseObserver) {
-            System.err.printf("architect for id %d finished\n", request.getId());
+            logger.info("architect for id {} finished", request.getId());
             arch = null;
             responseObserver.onNext(Void.newBuilder().build());
             responseObserver.onCompleted();

@@ -13,6 +13,7 @@ import org.bukkit.event.block.BlockEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.player.*;
 import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.util.Vector;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -73,8 +74,38 @@ public class WOZListener implements Listener {
         active = true;
     }
 
-    public void startAsWizard(){
+    public void movePlayer(int x, int y, int z, double xDir, double yDir, double zDir){
+        Location nextLocation = new Location(displayWorld, x,y,z);
+        Vector direction = new Vector(xDir, yDir, zDir);
+        nextLocation.setDirection(direction);
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                player.teleport(nextLocation);
+            }
 
+        }.runTask(this.plugin);
+        logger.info("Player position {}", player.getLocation().toString());
+    }
+
+    public void placeBlock(int x, int y, int z, Material material){
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                displayWorld.getBlockAt(x,y,z).setType(material);
+            }
+
+        }.runTask(this.plugin);
+    }
+
+    public void breakBlock(int x, int y, int z){
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                displayWorld.getBlockAt(x,y,z).setType(Material.AIR);
+            }
+
+        }.runTask(this.plugin);
     }
 
     @EventHandler
@@ -113,7 +144,6 @@ public class WOZListener implements Listener {
     }
 
     void loadWorld(String worldName){
-
         String filename = String.format("/de/saar/minecraft/worlds/%s.csv", worldName);
         InputStream in = WOZArchitect.class.getResourceAsStream(filename);
         if (in != null) {
