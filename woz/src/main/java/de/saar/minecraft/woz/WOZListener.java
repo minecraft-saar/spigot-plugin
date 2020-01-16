@@ -20,16 +20,19 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.concurrent.CountDownLatch;
 
 
 public class WOZListener implements Listener {
 
-    private static Logger logger = LogManager.getLogger(WOZListener.class);
-    private final WOZPlugin plugin;
     World displayWorld;
     Player player;
     boolean active = false;
     ArrayList<String> savedMessages = new ArrayList<>();
+    CountDownLatch wizardGaveInstructionLatch = new CountDownLatch(1);
+
+    private static Logger logger = LogManager.getLogger(WOZListener.class);
+    private final WOZPlugin plugin;
 
 
     WOZListener(WOZPlugin plugin) {
@@ -141,6 +144,7 @@ public class WOZListener implements Listener {
     public void onPlayerChat(AsyncPlayerChatEvent event){
         String message = event.getMessage();
         savedMessages.add(message);
+        wizardGaveInstructionLatch.countDown();
     }
 
     void loadWorld(String worldName){

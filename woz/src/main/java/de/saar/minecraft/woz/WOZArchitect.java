@@ -7,12 +7,21 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bukkit.Material;
 
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
 
 public class WOZArchitect implements Architect {
     private int waitTime;
-    private static Logger logger = LogManager.getLogger(WOZArchitect.class);
     private WOZListener listener;
+    private static Logger logger = LogManager.getLogger(WOZArchitect.class);
 
+
+    /**
+     *
+     * @param waitTime: time in seconds that the wizards gets to type an answer
+     * @param listener: the WOZListener
+     */
     public WOZArchitect(int waitTime, WOZListener listener) {
         this.waitTime = waitTime;
         this.listener = listener;
@@ -40,17 +49,16 @@ public class WOZArchitect implements Architect {
         new Thread() {
             @Override
             public void run() {
-                //TODO
-                listener.movePlayer(x,y,z,xDir,yDir,zDir);
+                listener.movePlayer(x, y, z, xDir, yDir, zDir);
                 listener.player.sendMessage("Next instruction: ");
 
-                // delay for a bit, so the wizard has time to type
-                try {
-                    Thread.sleep(waitTime);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
+                //  wait for the wizard to hit enter, then continue. If they don't hit enter in <waitTime> seconds send empty message
+                listener.wizardGaveInstructionLatch = new CountDownLatch(1);
+                try{
+                    boolean wizardGaveInstruction = listener.wizardGaveInstructionLatch.await(waitTime, TimeUnit.SECONDS);
+                } catch (InterruptedException e){
+                    logger.error(e.getMessage());
                 }
-                // TODO: wait for the wizard to hit enter, then continue. If they don't hit enter in x seconds send empty message
 
                 String text = String.join(". ", listener.savedMessages);
                 listener.savedMessages.clear();
@@ -78,14 +86,13 @@ public class WOZArchitect implements Architect {
                 listener.placeBlock(x,y,z,material);
                 logger.info("{} block placed at {}-{}-{}", material, x, y, z);
                 listener.player.sendMessage("Next instruction: ");
-
-                // delay for a bit, so the wizard has time to type
-                try {
-                    Thread.sleep(waitTime);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
+                //  wait for the wizard to hit enter, then continue. If they don't hit enter in <waitTime> seconds send empty message
+                listener.wizardGaveInstructionLatch = new CountDownLatch(1);
+                try{
+                    boolean wizardGaveInstruction = listener.wizardGaveInstructionLatch.await(waitTime, TimeUnit.SECONDS);
+                } catch (InterruptedException e){
+                    logger.error(e.getMessage());
                 }
-                // TODO: wait for the wizard to hit enter, then continue. If they don't hit enter in x seconds send empty message
 
                 String text = String.join(". ", listener.savedMessages);
                 listener.savedMessages.clear();
@@ -107,7 +114,6 @@ public class WOZArchitect implements Architect {
         int x = request.getX();
         int y = request.getY();
         int z = request.getZ();
-        int type = request.getType();
 
         // spawn a thread for a long-running computation
         new Thread() {
@@ -117,13 +123,13 @@ public class WOZArchitect implements Architect {
 
                 listener.player.sendMessage("Next instruction: ");
 
-                // delay for a bit, so the wizard has time to type
+                //  wait for the wizard to hit enter, then continue. If they don't hit enter in <waitTime> seconds send empty message
+                listener.wizardGaveInstructionLatch = new CountDownLatch(1);
                 try {
-                    Thread.sleep(waitTime);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
+                    boolean wizardGaveInstruction = listener.wizardGaveInstructionLatch.await(waitTime, TimeUnit.SECONDS);
+                } catch (InterruptedException e){
+                    logger.error(e.getMessage());
                 }
-                // TODO: wait for the wizard to hit enter, then continue. If they don't hit enter in x seconds send empty message
 
                 String text = String.join(". ", listener.savedMessages);
                 listener.savedMessages.clear();

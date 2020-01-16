@@ -64,7 +64,7 @@ public class WOZArchitectServer {
     private class ArchitectImpl extends ArchitectGrpc.ArchitectImplBase {
 
         public void hello(Void request, StreamObserver<ArchitectInformation> responseObserver) {
-            WOZArchitect arch = new WOZArchitect(1000, listener);
+            WOZArchitect arch = new WOZArchitect(1, listener);
 
             responseObserver.onNext(ArchitectInformation.newBuilder().setInfo(arch.getArchitectInformation()).build());
             responseObserver.onCompleted();
@@ -73,7 +73,7 @@ public class WOZArchitectServer {
 
         public void startGame(WorldSelectMessage request, StreamObserver<Void> responseObserver) {
             if (arch == null) {
-                arch = new WOZArchitect(10000, listener);
+                arch = new WOZArchitect(10, listener);
             }
             arch.initialize(request);
 
