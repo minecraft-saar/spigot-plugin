@@ -53,7 +53,7 @@ public class MinecraftClient implements Client{
      * Registers a game with the broker. Returns a world name.
      */
     public String registerGame(String playerName) throws UnknownHostException {
-        String hostname = "localhost";
+        String hostname;
         try {
             hostname = InetAddress.getLocalHost().getHostName();
         } catch (UnknownHostException e) {
