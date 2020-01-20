@@ -2,18 +2,24 @@ package de.saar.minecraft.woz;
 
 import de.saar.minecraft.architect.ArchitectGrpc;
 import de.saar.minecraft.architect.ArchitectInformation;
-import de.saar.minecraft.shared.*;
+import de.saar.minecraft.shared.BlockDestroyedMessage;
+import de.saar.minecraft.shared.BlockPlacedMessage;
+import de.saar.minecraft.shared.GameId;
+import de.saar.minecraft.shared.StatusMessage;
+import de.saar.minecraft.shared.TextMessage;
 import de.saar.minecraft.shared.Void;
+import de.saar.minecraft.shared.WorldSelectMessage;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import io.grpc.stub.StreamObserver;
+import java.io.IOException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.IOException;
+
 
 /**
- * A server that provides access to one WOZArchitect
+ * A server that provides access to one WOZArchitect.
  */
 public class WOZArchitectServer {
 
@@ -29,6 +35,10 @@ public class WOZArchitectServer {
         this.port = port;
     }
 
+    /**
+     * Starts the server.
+     * @throws IOException if the server cannot be started on the specified port
+     */
     public void start() throws IOException {
         server = ServerBuilder.forPort(port)
                 .addService(new ArchitectImpl())
@@ -45,6 +55,9 @@ public class WOZArchitectServer {
         logger.info("Architect server running on port {}", port);
     }
 
+    /**
+     * Stops the server if it was running.
+     */
     public void stop() {
         if (server != null) {
             server.shutdown();
@@ -66,7 +79,8 @@ public class WOZArchitectServer {
         public void hello(Void request, StreamObserver<ArchitectInformation> responseObserver) {
             WOZArchitect arch = new WOZArchitect(1, listener);
 
-            responseObserver.onNext(ArchitectInformation.newBuilder().setInfo(arch.getArchitectInformation()).build());
+            responseObserver.onNext(
+                ArchitectInformation.newBuilder().setInfo(arch.getArchitectInformation()).build());
             responseObserver.onCompleted();
         }
 
@@ -80,7 +94,8 @@ public class WOZArchitectServer {
             responseObserver.onNext(Void.newBuilder().build());
             responseObserver.onCompleted();
 
-            logger.info("architect for id {}: {}", request.getGameId(), arch.getArchitectInformation());
+            logger.info("architect for id {}: {}", request.getGameId(),
+                arch.getArchitectInformation());
         }
 
 
@@ -91,16 +106,19 @@ public class WOZArchitectServer {
             responseObserver.onCompleted();
         }
 
-        public void handleStatusInformation(StatusMessage request, StreamObserver<TextMessage> responseObserver) {
+        public void handleStatusInformation(StatusMessage request,
+                                            StreamObserver<TextMessage> responseObserver) {
             arch.handleStatusInformation(request, responseObserver);
         }
 
 
-        public void handleBlockPlaced(BlockPlacedMessage request, StreamObserver<TextMessage> responseObserver){
+        public void handleBlockPlaced(BlockPlacedMessage request,
+                                      StreamObserver<TextMessage> responseObserver) {
             arch.handleBlockPlaced(request, responseObserver);
         }
 
-        public void handleBlockDestroyed(BlockDestroyedMessage request, StreamObserver<TextMessage> responseObserver) {
+        public void handleBlockDestroyed(BlockDestroyedMessage request,
+                                         StreamObserver<TextMessage> responseObserver) {
             arch.handleBlockDestroyed(request, responseObserver);
         }
     }

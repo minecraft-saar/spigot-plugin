@@ -1,5 +1,6 @@
 package de.saar.minecraft.communication;
 
+import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bukkit.Location;
@@ -10,9 +11,8 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitScheduler;
 import org.bukkit.util.Vector;
 
-import java.util.List;
 
-public class WorldTestPlugin extends JavaPlugin{
+public class WorldTestPlugin extends JavaPlugin {
     private static Logger logger = LogManager.getLogger(WorldTestPlugin.class);
     private Client client;
     private MinecraftListener listener;
@@ -42,27 +42,39 @@ public class WorldTestPlugin extends JavaPlugin{
             listener.deleteWorld(world);
         }
         // Finish all remaining games
-        for (int gameId: client.getActiveGames().values()){
+        for (int gameId: client.getActiveGames().values()) {
             client.finishGame(gameId);
         }
     }
 
-    public void getAllPlayerPositions(){
+    /**
+     * Gets the locations of all players on the server and sends StatusMessages to the broker.
+     */
+    public void getAllPlayerPositions() {
         logger.debug(client.getActiveGames().toString());
-        for (Player player: getServer().getOnlinePlayers()){
+        for (Player player: getServer().getOnlinePlayers()) {
             String playerName = player.getName();
             int gameId = client.getGameIdForPlayer(playerName);
+
             Location playerLocation = player.getLocation();
             int xPos = (int)Math.round(playerLocation.getX());
             int yPos = (int)Math.round(playerLocation.getY());
             int zPos = (int)Math.round(playerLocation.getZ());
 
-            Vector direction = player.getEyeLocation().getDirection();
+            Vector direction = playerLocation.getDirection();
             double xDir = direction.getX();
             double yDir = direction.getY();
             double zDir = direction.getZ();
-            System.out.println(direction);
-            String returnMessage = client.sendPlayerPosition(gameId, xPos, yPos, zPos, xDir, yDir, zDir);
+            logger.debug("Direction {}", direction);
+            logger.debug("Yaw {}", playerLocation.getYaw());
+            logger.debug("Normalized Yaw {}",
+                playerLocation.normalizeYaw(playerLocation.getYaw()));
+            logger.debug("Pitch {}", playerLocation.getPitch());
+            logger.debug("Normalized Pitch {}",
+                playerLocation.normalizePitch(playerLocation.getPitch()));
+            logger.debug("Location {}", playerLocation);
+            String returnMessage = client.sendPlayerPosition(
+                gameId, xPos, yPos, zPos, xDir, yDir, zDir);
             player.sendMessage(returnMessage);
         }
     }

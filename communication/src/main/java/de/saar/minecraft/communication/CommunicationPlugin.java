@@ -1,5 +1,6 @@
 package de.saar.minecraft.communication;
 
+import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bukkit.Location;
@@ -10,10 +11,8 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitScheduler;
 import org.bukkit.util.Vector;
 
-import java.util.List;
 
-
-public class CommunicationPlugin extends JavaPlugin{
+public class CommunicationPlugin extends JavaPlugin {
 
     MinecraftClient client;
     MinecraftListener listener;
@@ -45,14 +44,17 @@ public class CommunicationPlugin extends JavaPlugin{
             listener.deleteWorld(world);
         }
         // Finish all remaining games
-        for (int gameId: client.getActiveGames().values()){
+        for (int gameId: client.getActiveGames().values()) {
             client.finishGame(gameId);
         }
     }
 
-    public void getAllPlayerPositions(){
+    /**
+     * Gets the locations of all players on the server and sends StatusMessages to the broker.
+     */
+    public void getAllPlayerPositions() {
         logger.debug(client.getActiveGames().toString());
-        for (Player player: getServer().getOnlinePlayers()){
+        for (Player player: getServer().getOnlinePlayers()) {
             String playerName = player.getName();
             int gameId = client.getGameIdForPlayer(playerName);
             Location playerLocation = player.getLocation();
@@ -64,7 +66,8 @@ public class CommunicationPlugin extends JavaPlugin{
             double yDir = direction.getY();
             double zDir = direction.getZ();
             System.out.println(direction);
-            String returnMessage = client.sendPlayerPosition(gameId, xPos, yPos, zPos, xDir, yDir, zDir);
+            String returnMessage = client.sendPlayerPosition(
+                gameId, xPos, yPos, zPos, xDir, yDir, zDir);
             getServer().getPlayer(playerName).sendMessage(returnMessage);
         }
     }

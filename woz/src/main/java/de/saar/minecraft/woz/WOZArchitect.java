@@ -1,14 +1,17 @@
 package de.saar.minecraft.woz;
 
 import de.saar.minecraft.architect.Architect;
-import de.saar.minecraft.shared.*;
+import de.saar.minecraft.shared.BlockDestroyedMessage;
+import de.saar.minecraft.shared.BlockPlacedMessage;
+import de.saar.minecraft.shared.StatusMessage;
+import de.saar.minecraft.shared.TextMessage;
+import de.saar.minecraft.shared.WorldSelectMessage;
 import io.grpc.stub.StreamObserver;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bukkit.Material;
-
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 
 public class WOZArchitect implements Architect {
@@ -16,11 +19,10 @@ public class WOZArchitect implements Architect {
     private WOZListener listener;
     private static Logger logger = LogManager.getLogger(WOZArchitect.class);
 
-
     /**
-     *
-     * @param waitTime: time in seconds that the wizards gets to type an answer
-     * @param listener: the WOZListener
+     * Initializes a Wizard of Oz Architect.
+     * @param waitTime time in seconds that the wizards gets to type an answer
+     * @param listener the WOZListener
      */
     public WOZArchitect(int waitTime, WOZListener listener) {
         this.waitTime = waitTime;
@@ -36,7 +38,8 @@ public class WOZArchitect implements Architect {
     }
 
     @Override
-    public void handleStatusInformation(StatusMessage request, StreamObserver<TextMessage> responseObserver) {
+    public void handleStatusInformation(StatusMessage request,
+                                        StreamObserver<TextMessage> responseObserver) {
         int gameId = request.getGameId();
         int x = request.getX();
         int y = request.getY();
@@ -52,26 +55,29 @@ public class WOZArchitect implements Architect {
                 listener.movePlayer(x, y, z, xDir, yDir, zDir);
                 listener.player.sendMessage("Next instruction: ");
 
-                //  wait for the wizard to hit enter, then continue. If they don't hit enter in <waitTime> seconds send empty message
+                //  wait for the wizard to hit enter, then continue.
+                //  If they don't hit enter in <waitTime> seconds send empty message
                 listener.wizardGaveInstructionLatch = new CountDownLatch(1);
-                try{
-                    boolean wizardGaveInstruction = listener.wizardGaveInstructionLatch.await(waitTime, TimeUnit.SECONDS);
-                } catch (InterruptedException e){
+                try {
+                    boolean wizardGaveInstruction = listener.wizardGaveInstructionLatch.await(
+                        waitTime, TimeUnit.SECONDS);
+                } catch (InterruptedException e) {
                     logger.error(e.getMessage());
                 }
 
                 String text = String.join(". ", listener.savedMessages);
                 listener.savedMessages.clear();
-                TextMessage mText = TextMessage.newBuilder().setGameId(gameId).setText(text).build();
+                TextMessage message = TextMessage.newBuilder().setGameId(gameId).setText(text).build();
 
-                responseObserver.onNext(mText);
+                responseObserver.onNext(message);
                 responseObserver.onCompleted();
             }
         }.start();
     }
 
     @Override
-    public void handleBlockPlaced(BlockPlacedMessage request, StreamObserver<TextMessage> responseObserver) {
+    public void handleBlockPlaced(BlockPlacedMessage request,
+                                  StreamObserver<TextMessage> responseObserver) {
         int gameId = request.getGameId();
         int x = request.getX();
         int y = request.getY();
@@ -86,22 +92,24 @@ public class WOZArchitect implements Architect {
                 listener.placeBlock(x,y,z,material);
                 logger.info("{} block placed at {}-{}-{}", material, x, y, z);
                 listener.player.sendMessage("Next instruction: ");
-                //  wait for the wizard to hit enter, then continue. If they don't hit enter in <waitTime> seconds send empty message
+                //  wait for the wizard to hit enter, then continue.
+                //  If they don't hit enter in <waitTime> seconds send empty message
                 listener.wizardGaveInstructionLatch = new CountDownLatch(1);
-                try{
-                    boolean wizardGaveInstruction = listener.wizardGaveInstructionLatch.await(waitTime, TimeUnit.SECONDS);
-                } catch (InterruptedException e){
+                try {
+                    boolean wizardGaveInstruction = listener.wizardGaveInstructionLatch.await(
+                        waitTime, TimeUnit.SECONDS);
+                } catch (InterruptedException e) {
                     logger.error(e.getMessage());
                 }
 
                 String text = String.join(". ", listener.savedMessages);
                 listener.savedMessages.clear();
 
-                TextMessage mText = TextMessage.newBuilder().setGameId(gameId).setText(text).build();
+                TextMessage message = TextMessage.newBuilder().setGameId(gameId).setText(text).build();
                 logger.info("Send message: " + text);
 
                 // send the text message back to the client
-                responseObserver.onNext(mText);
+                responseObserver.onNext(message);
                 responseObserver.onCompleted();
             }
         }.start();
@@ -123,20 +131,22 @@ public class WOZArchitect implements Architect {
 
                 listener.player.sendMessage("Next instruction: ");
 
-                //  wait for the wizard to hit enter, then continue. If they don't hit enter in <waitTime> seconds send empty message
+                //  wait for the wizard to hit enter, then continue.
+                //  If they don't hit enter in <waitTime> seconds send empty message
                 listener.wizardGaveInstructionLatch = new CountDownLatch(1);
                 try {
-                    boolean wizardGaveInstruction = listener.wizardGaveInstructionLatch.await(waitTime, TimeUnit.SECONDS);
-                } catch (InterruptedException e){
+                    boolean wizardGaveInstruction = listener.wizardGaveInstructionLatch.await(
+                        waitTime, TimeUnit.SECONDS);
+                } catch (InterruptedException e) {
                     logger.error(e.getMessage());
                 }
 
                 String text = String.join(". ", listener.savedMessages);
                 listener.savedMessages.clear();
 
-                TextMessage mText = TextMessage.newBuilder().setGameId(gameId).setText(text).build();
+                TextMessage message = TextMessage.newBuilder().setGameId(gameId).setText(text).build();
 
-                responseObserver.onNext(mText);
+                responseObserver.onNext(message);
                 responseObserver.onCompleted();
             }
         }.start();

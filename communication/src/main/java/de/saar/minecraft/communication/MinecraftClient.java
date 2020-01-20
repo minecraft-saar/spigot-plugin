@@ -2,20 +2,27 @@ package de.saar.minecraft.communication;
 
 import de.saar.minecraft.broker.BrokerGrpc;
 import de.saar.minecraft.broker.GameData;
-import de.saar.minecraft.shared.*;
+import de.saar.minecraft.shared.BlockDestroyedMessage;
+import de.saar.minecraft.shared.BlockPlacedMessage;
+import de.saar.minecraft.shared.GameId;
+import de.saar.minecraft.shared.MinecraftServerError;
+import de.saar.minecraft.shared.StatusMessage;
+import de.saar.minecraft.shared.TextMessage;
+import de.saar.minecraft.shared.WorldFileError;
+import de.saar.minecraft.shared.WorldSelectMessage;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.StatusRuntimeException;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.concurrent.TimeUnit;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
-public class MinecraftClient implements Client{
+
+public class MinecraftClient implements Client {
 
     private final ManagedChannel channel;
     private BrokerGrpc.BrokerBlockingStub blockingStub;
@@ -30,7 +37,8 @@ public class MinecraftClient implements Client{
      */
     public MinecraftClient(String host, int port) {
         this(ManagedChannelBuilder.forAddress(host, port).usePlaintext().build());
-        // TODO: .build() here or change signature of next method to public RouteGuideClient(ManagedChannelBuilder<?> channelBuilder)
+        // TODO: .build() here or change signature of next method to public
+        //  RouteGuideClient(ManagedChannelBuilder<?> channelBuilder)
         activeGames = new HashMap<>();
     }
 
@@ -61,38 +69,53 @@ public class MinecraftClient implements Client{
             throw e;
         }
 
-        GameData mGameInfo = GameData.newBuilder().setClientAddress(hostname).setPlayerName(playerName)
-                .build();
+        GameData gameInfo = GameData.newBuilder()
+            .setClientAddress(hostname)
+            .setPlayerName(playerName)
+            .build();
 
-        WorldSelectMessage mWorldSelect;
+        WorldSelectMessage worldSelect;
         try {
-            mWorldSelect = blockingStub.startGame(mGameInfo);
+            worldSelect = blockingStub.startGame(gameInfo);
         } catch (StatusRuntimeException e) {
             logger.error("RPC failed: " + e.getStatus());
             throw e;
         }
 
         // remember active games
-        int gameId = mWorldSelect.getGameId();
+        int gameId = worldSelect.getGameId();
         activeGames.put(playerName, gameId);
 
-        return mWorldSelect.getName();
+        return worldSelect.getName();
     }
 
     /**
      * Unregisters a game with the broker.
-     * @param gameId: the unique game id of the game to be closed
      */
     public void finishGame(int gameId) {
         activeGames.values().remove(gameId);
         logger.info(String.format("Removed player %d", gameId));
         logger.info(activeGames.toString());
-        GameId mGameId = GameId.newBuilder().setId(gameId).build();
-        blockingStub.endGame(mGameId);  // TODO: what to do with the void return
+        GameId gameIdMessage = GameId.newBuilder().setId(gameId).build();
+        blockingStub.endGame(gameIdMessage);  // TODO: what to do with the void return
     }
 
-    public String sendPlayerPosition(int gameId, int x, int y, int z, double xDir, double yDir, double zDir){
-        StatusMessage position = StatusMessage.newBuilder().setGameId(gameId).setX(x).setY(y).setZ(z).setXDirection(xDir).setYDirection(yDir).setZDirection(zDir).build();
+    /**
+     * Sends a player's location and direction to the broker.
+     * @return the text message the broker send back
+     */
+    public String sendPlayerPosition(int gameId, int x, int y, int z, double xDir, double yDir,
+                                     double zDir) {
+        // sendStatusMessage(gameId, x, y, z, xdir, ydir, zdir, new TextStreamObserver(gameId)
+        StatusMessage position = StatusMessage.newBuilder()
+            .setGameId(gameId)
+            .setX(x)
+            .setY(y)
+            .setZ(z)
+            .setXDirection(xDir)
+            .setYDirection(yDir)
+            .setZDirection(zDir)
+            .build();
         Iterator<TextMessage> messageStream = blockingStub.handleStatusInformation(position);
         StringBuilder result = new StringBuilder();
         for (; messageStream.hasNext(); ) {
@@ -104,16 +127,27 @@ public class MinecraftClient implements Client{
         return result.toString();
     }
 
-    public int getGameIdForPlayer(String playerName){
+    public int getGameIdForPlayer(String playerName) {
         return this.activeGames.get(playerName);
     }
 
-    public HashMap<String, Integer> getActiveGames(){
+    public HashMap<String, Integer> getActiveGames() {
         return this.activeGames;
     }
 
+    /**
+     * Sends a BlockPlacedMessage to the broker.
+     * @param type an integer encoding the block material
+     * @return the text message the broker sends back
+     */
     public String sendBlockPlaced(int gameId, int x, int y, int z, int type) {
-        BlockPlacedMessage message = BlockPlacedMessage.newBuilder().setGameId(gameId).setX(x).setY(y).setZ(z).setType(type).build();
+        BlockPlacedMessage message = BlockPlacedMessage.newBuilder()
+            .setGameId(gameId)
+            .setX(x)
+            .setY(y)
+            .setZ(z)
+            .setType(type)
+            .build();
         Iterator<TextMessage> messageStream = blockingStub.handleBlockPlaced(message);
         StringBuilder result = new StringBuilder();
         for (; messageStream.hasNext(); ) {
@@ -123,8 +157,19 @@ public class MinecraftClient implements Client{
         return result.toString();
     }
 
+    /**
+     * Sends a BlockDestroyedMessage to the broker.
+     * @param type an integer encoding the block material
+     * @return the text message the broker sends back
+     */
     public String sendBlockDestroyed(int gameId, int x, int y, int z, int type) {
-        BlockDestroyedMessage message = BlockDestroyedMessage.newBuilder().setGameId(gameId).setX(x).setY(y).setZ(z).setType(type).build();
+        BlockDestroyedMessage message = BlockDestroyedMessage.newBuilder()
+            .setGameId(gameId)
+            .setX(x)
+            .setY(y)
+            .setZ(z)
+            .setType(type)
+            .build();
         Iterator<TextMessage> messageStream = blockingStub.handleBlockDestroyed(message);
         StringBuilder result = new StringBuilder();
         for (; messageStream.hasNext(); ) {
@@ -134,13 +179,29 @@ public class MinecraftClient implements Client{
         return result.toString();
     }
 
+    /**
+     * Sends a MinecraftServerError to the broker.
+     * @param gameId the id of the game where the error occurred
+     * @param message the specific error message
+     */
     public void sendMinecraftServerError(int gameId, String message) {
-        MinecraftServerError request = MinecraftServerError.newBuilder().setGameId(gameId).setMessage(message).build();
+        MinecraftServerError request = MinecraftServerError.newBuilder()
+            .setGameId(gameId)
+            .setMessage(message)
+            .build();
         blockingStub.handleMinecraftServerError(request);
     }
 
+    /**
+     * Sends a WorldFileError to the broker.
+     * @param gameId the id of the game where the error occurred
+     * @param message the specific error message
+     */
     public void sendWorldFileError(int gameId, String message) {
-        WorldFileError request = WorldFileError.newBuilder().setGameId(gameId).setMessage(message).build();
+        WorldFileError request = WorldFileError.newBuilder()
+            .setGameId(gameId)
+            .setMessage(message)
+            .build();
         blockingStub.handleWorldFileError(request);
     }
 

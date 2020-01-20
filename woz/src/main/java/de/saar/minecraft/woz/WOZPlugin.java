@@ -1,14 +1,10 @@
 package de.saar.minecraft.woz;
 
+import java.io.IOException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bukkit.Bukkit;
-import org.bukkit.World;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.scheduler.BukkitScheduler;
-
-import java.io.IOException;
-import java.util.List;
 
 
 public class WOZPlugin extends JavaPlugin {
