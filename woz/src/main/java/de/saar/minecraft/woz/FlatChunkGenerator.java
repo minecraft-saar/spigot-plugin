@@ -2,10 +2,10 @@
  * According to https://bukkit.org/threads/how-to-create-custom-world-generators.79066/
  */
 
-package de.saar.minecraft.worldtest;
+package de.saar.minecraft.woz;
+
 
 import java.util.Random;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bukkit.Location;
@@ -20,29 +20,27 @@ public class FlatChunkGenerator extends ChunkGenerator {
     private static Logger logger = LogManager.getLogger(FlatChunkGenerator.class);
 
     @Override
-    public ChunkData generateChunkData(World world, Random random, int chunkX, int chunkZ, BiomeGrid biome) {
+    public ChunkData generateChunkData(World world, Random random, int chunkX, int chunkZ,
+                                       BiomeGrid biome) {
         WorldBorder border = world.getWorldBorder();
         ChunkData chunk = createChunkData(world);
 
         Location chunkLocation = new Location(world, chunkX, 0, chunkZ);
-        if (!border.isInside(chunkLocation)){
-            logger.debug(String.format("Chunk %d-%d Outside border %d-%d" , chunkLocation.getBlockX(), chunkLocation.getBlockZ(), border.getCenter().getBlockX(), border.getCenter().getBlockZ()));
+        if (!border.isInside(chunkLocation)) {
             return chunk;
         }
-
-
-        for (int x = 0; x < 16; x++)
+        // Set ground blocks
+        for (int x = 0; x < 16; x++) {
             for (int z = 0; z < 16; z++) {
                 chunk.setBlock(x, 1, z, Material.BEDROCK);
                 chunk.setBlock(x, 0, z, Material.BEDROCK);
             }
-        logger.debug("Chunk generated: " + chunkX + " " + chunkZ);
+        }
         return chunk;
     }
 
-
     @Override
     public Location getFixedSpawnLocation(World world, Random random) {
-    return new Location(world, 16, 2, 16);
-  }  // Coordinates from 0 to 32 instead of -16 to 16
+        return new Location(world, 16, 2, 16);
+    }  // Coordinates from 0 to 32 instead of -16 to 16
 }

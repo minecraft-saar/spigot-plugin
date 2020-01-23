@@ -12,19 +12,17 @@ import org.bukkit.scheduler.BukkitScheduler;
 import org.bukkit.util.Vector;
 
 
-public class CommunicationPlugin extends JavaPlugin {
-
-    MinecraftClient client;
-    MinecraftListener listener;
-    private static Logger logger = LogManager.getLogger(CommunicationPlugin.class);
+public class WorldTestPlugin extends JavaPlugin {
+    private static Logger logger = LogManager.getLogger(WorldTestPlugin.class);
+    private Client client;
+    private MinecraftListener listener;
 
     // Fired when plugin is first enabled
     @Override
     public void onEnable() {
-        client = new MinecraftClient("localhost", 2802);
+        client = new DummyMinecraftClient();
         listener = new MinecraftListener(client);
         getServer().getPluginManager().registerEvents(listener, this);
-
         // to get player position
         BukkitScheduler positionScheduler = getServer().getScheduler();
         positionScheduler.scheduleSyncRepeatingTask(this, new Runnable() {
@@ -57,18 +55,27 @@ public class CommunicationPlugin extends JavaPlugin {
         for (Player player: getServer().getOnlinePlayers()) {
             String playerName = player.getName();
             int gameId = client.getGameIdForPlayer(playerName);
+
             Location playerLocation = player.getLocation();
             int xPos = (int)Math.round(playerLocation.getX());
             int yPos = (int)Math.round(playerLocation.getY());
             int zPos = (int)Math.round(playerLocation.getZ());
-            Vector direction = player.getEyeLocation().getDirection();
+
+            Vector direction = playerLocation.getDirection();
             double xDir = direction.getX();
             double yDir = direction.getY();
             double zDir = direction.getZ();
-            System.out.println(direction);
+            logger.debug("Direction {}", direction);
+            logger.debug("Yaw {}", playerLocation.getYaw());
+            logger.debug("Normalized Yaw {}",
+                playerLocation.normalizeYaw(playerLocation.getYaw()));
+            logger.debug("Pitch {}", playerLocation.getPitch());
+            logger.debug("Normalized Pitch {}",
+                playerLocation.normalizePitch(playerLocation.getPitch()));
+            logger.debug("Location {}", playerLocation);
             String returnMessage = client.sendPlayerPosition(
                 gameId, xPos, yPos, zPos, xDir, yDir, zDir);
-            getServer().getPlayer(playerName).sendMessage(returnMessage);
+            player.sendMessage(returnMessage);
         }
     }
 
@@ -78,3 +85,4 @@ public class CommunicationPlugin extends JavaPlugin {
     }
 
 }
+
