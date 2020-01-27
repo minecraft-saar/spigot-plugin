@@ -60,7 +60,7 @@ public class MinecraftClient implements Client {
     /**
      * Registers a game with the broker. Returns a world name.
      */
-    public String registerGame(String playerName) throws UnknownHostException {
+    public String registerGame(String playerName, String playerIp) throws UnknownHostException {
         String hostname;
         try {
             hostname = InetAddress.getLocalHost().getHostName();
@@ -70,7 +70,7 @@ public class MinecraftClient implements Client {
         }
 
         GameData gameInfo = GameData.newBuilder()
-            .setClientAddress(hostname)
+            .setClientAddress(playerIp)
             .setPlayerName(playerName)
             .build();
 

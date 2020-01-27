@@ -1,13 +1,12 @@
 package de.saar.minecraft.communication;
 
-import de.saar.minecraft.shared.MinecraftServerError;
 import java.net.UnknownHostException;
 import java.util.HashMap;
 
 public interface Client {
     public void shutdown() throws InterruptedException;
 
-    public String registerGame(String playerName) throws UnknownHostException;
+    public String registerGame(String playerName, String playerIp) throws UnknownHostException;
 
     public void finishGame(int gameId);
 

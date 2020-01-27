@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.nio.file.Paths;
 import java.util.HashMap;
@@ -82,9 +83,10 @@ public class MinecraftListener implements Listener {
     public void onPlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
         String playerName = player.getDisplayName();
+        String playerIp = player.getAddress().toString();
         String structureFile;
         try {
-            structureFile = client.registerGame(playerName);
+            structureFile = client.registerGame(playerName, playerIp);
         } catch (UnknownHostException e) {
             player.sendMessage("You could not connect to the experiment server");
             logger.error("Player {} could not connect: {}", playerName, e);

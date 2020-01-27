@@ -23,7 +23,7 @@ public class DummyMinecraftClient implements Client {
     /**
      * Starts a new game with the world "bridge".
      */
-    public String registerGame(String playerName) throws UnknownHostException {
+    public String registerGame(String playerName, String playerIp) throws UnknownHostException {
         // remember active games
         activeGames.put(playerName, dummyGameId++);
         return "bridge";
