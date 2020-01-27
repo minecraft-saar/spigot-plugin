@@ -242,10 +242,8 @@ public class MinecraftListener implements Listener {
             gameId, block.getX(),
             block.getY(),
             block.getZ());
-        String message = client.sendBlockPlaced(gameId, block.getX(), block.getY(), block.getZ(),
+        client.sendBlockPlaced(gameId, block.getX(), block.getY(), block.getZ(),
             block.getType().ordinal());
-        logger.info("Message to {}: {}", player.getName(), message);
-        player.sendMessage(message);
     }
 
     /**
@@ -265,10 +263,8 @@ public class MinecraftListener implements Listener {
             block.getType().name(), block.getType().ordinal());
         
         int gameId = client.getGameIdForPlayer(player.getName());
-        String message = client.sendBlockDestroyed(
+        client.sendBlockDestroyed(
             gameId, block.getX(), block.getY(), block.getZ(), block.getType().ordinal());
-        logger.info("Message to {}: {}", player.getName(), message);
-        player.sendMessage(message);
     }
 
     // TODO: what if block is not broken but just damaged?

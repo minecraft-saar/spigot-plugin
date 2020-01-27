@@ -21,7 +21,7 @@ public class CommunicationPlugin extends JavaPlugin {
     // Fired when plugin is first enabled
     @Override
     public void onEnable() {
-        client = new MinecraftClient("localhost", 2802);
+        client = new MinecraftClient("localhost", 2802, this);
         listener = new MinecraftListener(client);
         getServer().getPluginManager().registerEvents(listener, this);
 
@@ -66,10 +66,15 @@ public class CommunicationPlugin extends JavaPlugin {
             double yDir = direction.getY();
             double zDir = direction.getZ();
             System.out.println(direction);
-            String returnMessage = client.sendPlayerPosition(
-                gameId, xPos, yPos, zPos, xDir, yDir, zDir);
-            getServer().getPlayer(playerName).sendMessage(returnMessage);
+            client.sendPlayerPosition(gameId, xPos, yPos, zPos, xDir, yDir, zDir);
+//            getServer().getPlayer(playerName).sendMessage(returnMessage);
         }
+    }
+
+
+    public void sendTextMessage(String playerName, String message) {
+        // TODO: check that player is still online
+        getServer().getPlayer(playerName).sendMessage(message);
     }
 
     @Override

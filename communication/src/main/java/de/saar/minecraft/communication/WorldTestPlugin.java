@@ -20,7 +20,7 @@ public class WorldTestPlugin extends JavaPlugin {
     // Fired when plugin is first enabled
     @Override
     public void onEnable() {
-        client = new DummyMinecraftClient();
+        client = new DummyMinecraftClient(this);
         listener = new MinecraftListener(client);
         getServer().getPluginManager().registerEvents(listener, this);
         // to get player position
@@ -73,15 +73,18 @@ public class WorldTestPlugin extends JavaPlugin {
             logger.debug("Normalized Pitch {}",
                 playerLocation.normalizePitch(playerLocation.getPitch()));
             logger.debug("Location {}", playerLocation);
-            String returnMessage = client.sendPlayerPosition(
-                gameId, xPos, yPos, zPos, xDir, yDir, zDir);
-            player.sendMessage(returnMessage);
+            client.sendPlayerPosition(gameId, xPos, yPos, zPos, xDir, yDir, zDir);
         }
     }
 
     @Override
     public ChunkGenerator getDefaultWorldGenerator(String worldName, String id) {
         return new FlatChunkGenerator();
+    }
+
+    public void sendTextMessage(String playerName, String message) {
+        // TODO: check that player is still online
+        getServer().getPlayer(playerName).sendMessage(message);
     }
 
 }
