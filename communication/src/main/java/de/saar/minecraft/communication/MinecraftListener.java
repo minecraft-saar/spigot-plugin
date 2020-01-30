@@ -84,6 +84,9 @@ public class MinecraftListener implements Listener {
         Player player = event.getPlayer();
         String playerName = player.getDisplayName();
         String playerIp = player.getAddress().toString();
+        logger.info("Player ip full {}", playerIp);
+        logger.info("Player ip {}", player.getAddress().getHostName());
+        logger.info("Player port {}", player.getAddress().getPort());
         String structureFile;
         try {
             structureFile = client.registerGame(playerName, playerIp);
