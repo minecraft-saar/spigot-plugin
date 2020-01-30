@@ -21,16 +21,16 @@ import org.apache.logging.log4j.Logger;
 /**
  * A server that provides access to one WOZArchitect.
  */
-public class WOZArchitectServer {
+public class WozArchitectServer {
 
     private Server server;
     private int port;
-    private WOZListener listener;
-    private WOZArchitect arch;
+    private WozListener listener;
+    private WozArchitect arch;
 
-    private static Logger logger = LogManager.getLogger(WOZArchitectServer.class);
+    private static Logger logger = LogManager.getLogger(WozArchitectServer.class);
 
-    public WOZArchitectServer(int port, WOZListener listener) {
+    public WozArchitectServer(int port, WozListener listener) {
         this.listener = listener;
         this.port = port;
     }
@@ -48,7 +48,7 @@ public class WOZArchitectServer {
         Runtime.getRuntime().addShutdownHook(new Thread() {
             @Override
             public void run() {
-                WOZArchitectServer.this.stop();
+                WozArchitectServer.this.stop();
             }
         });
 
@@ -77,7 +77,7 @@ public class WOZArchitectServer {
     private class ArchitectImpl extends ArchitectGrpc.ArchitectImplBase {
 
         public void hello(Void request, StreamObserver<ArchitectInformation> responseObserver) {
-            WOZArchitect arch = new WOZArchitect(1, listener);
+            WozArchitect arch = new WozArchitect(1, listener);
 
             responseObserver.onNext(
                 ArchitectInformation.newBuilder().setInfo(arch.getArchitectInformation()).build());
@@ -87,7 +87,7 @@ public class WOZArchitectServer {
 
         public void startGame(WorldSelectMessage request, StreamObserver<Void> responseObserver) {
             if (arch == null) {
-                arch = new WOZArchitect(10, listener);
+                arch = new WozArchitect(10, listener);
             }
             arch.initialize(request);
 

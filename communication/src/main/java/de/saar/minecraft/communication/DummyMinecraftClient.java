@@ -1,6 +1,5 @@
 package de.saar.minecraft.communication;
 
-import java.net.UnknownHostException;
 import org.apache.commons.collections4.BidiMap;
 import org.apache.commons.collections4.bidimap.DualHashBidiMap;
 import org.apache.logging.log4j.LogManager;
@@ -20,13 +19,13 @@ public class DummyMinecraftClient implements Client {
     }
 
 
-    public void shutdown() throws InterruptedException {
+    public void shutdown() {
     }
 
     /**
      * Starts a new game with the world "bridge".
      */
-    public String registerGame(String playerName, String playerIp) throws UnknownHostException {
+    public String registerGame(String playerName, String playerIp) {
         // remember active games
         activeGames.put(playerName, dummyGameId++);
         return "bridge";

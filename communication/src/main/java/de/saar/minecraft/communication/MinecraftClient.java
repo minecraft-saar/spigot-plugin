@@ -14,10 +14,6 @@ import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.StatusRuntimeException;
 import io.grpc.stub.StreamObserver;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.concurrent.TimeUnit;
 import org.apache.commons.collections4.BidiMap;
 import org.apache.commons.collections4.bidimap.DualHashBidiMap;
@@ -45,7 +41,7 @@ public class MinecraftClient implements Client {
         // TODO: .build() here or change signature of next method to public
         //  RouteGuideClient(ManagedChannelBuilder<?> channelBuilder)
         activeGames = new DualHashBidiMap<>();
-        this.plugin = plugin;
+        MinecraftClient.plugin = plugin;
     }
 
     /**
@@ -66,15 +62,7 @@ public class MinecraftClient implements Client {
     /**
      * Registers a game with the broker. Returns a world name.
      */
-    public String registerGame(String playerName, String playerIp) throws UnknownHostException {
-        String hostname;
-        try {
-            hostname = InetAddress.getLocalHost().getHostName();
-        } catch (UnknownHostException e) {
-            logger.error("Hostname not found: " + e.getMessage());
-            throw e;
-        }
-
+    public String registerGame(String playerName, String playerIp) {
         GameData gameInfo = GameData.newBuilder()
             .setClientAddress(playerIp)
             .setPlayerName(playerName)
