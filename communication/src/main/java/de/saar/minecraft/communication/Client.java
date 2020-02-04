@@ -21,9 +21,7 @@ public interface Client {
 
     void sendWorldFileError(int gameId, String message);
 
-    void beginEvaluation(int gameId);
-
-    void sendEvaluationAnswer(int gameId, String message);
+    void sendTextMessage(int gameId, String message);
 
     int getGameIdForPlayer(String playerName);
 

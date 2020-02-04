@@ -28,6 +28,7 @@ import org.bukkit.WorldBorder;
 import org.bukkit.WorldCreator;
 import org.bukkit.block.Biome;
 import org.bukkit.block.Block;
+import org.bukkit.block.data.Lightable;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -38,9 +39,11 @@ import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerGameModeChangeEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.server.BroadcastMessageEvent;
 import org.bukkit.event.weather.WeatherChangeEvent;
 import org.bukkit.event.world.StructureGrowEvent;
 import org.bukkit.event.world.WorldLoadEvent;
+import org.bukkit.inventory.ItemStack;
 
 
 public class MinecraftListener implements Listener {
@@ -50,8 +53,6 @@ public class MinecraftListener implements Listener {
     World nextWorld;  // Preloaded world for the next joining player
     HashMap<String, World> activeWorlds = new HashMap<>();
     int worldCounter = 0;
-    HashMap<Integer,String> currentMessages = new HashMap<Integer, String>();
-    HashMap<Integer, CountDownLatch> MessageLatches = new HashMap<Integer, CountDownLatch>(1);
 
     MinecraftListener(Client client) {
         super();
@@ -87,7 +88,7 @@ public class MinecraftListener implements Listener {
     public void onPlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
         String playerName = player.getDisplayName();
-        String playerIp = player.getAddress().toString();
+        String playerIp = player.getAddress().toString();  // TODO: adjust for virtual players without an address
         logger.info("Player ip full {}", playerIp);
         logger.info("Player ip {}", player.getAddress().getHostName());
         logger.info("Player port {}", player.getAddress().getPort());
@@ -136,8 +137,15 @@ public class MinecraftListener implements Listener {
         logger.info("Now in world {}", player.getWorld().getName());
         logger.debug("Now at block type: {}", teleportLocation.getBlock().getType());
 
+
         // Add world to active worlds
         activeWorlds.put(nextWorld.getName(), nextWorld);
+
+        // Put items in players directory TODO: depending on the world?
+        player.getInventory().addItem(new ItemStack(Material.BLUE_WOOL, 1));
+        player.getInventory().addItem(new ItemStack(Material.RED_WOOL, 1));
+        player.getInventory().addItem(new ItemStack(Material.YELLOW_WOOL, 1));
+        player.setGameMode(GameMode.CREATIVE);
 
         // Create new preloaded world for the next player
         String worldName = "playerworld_" + ++worldCounter;
@@ -158,12 +166,17 @@ public class MinecraftListener implements Listener {
         world.setThundering(false);
         world.setSpawnFlags(false, false);
         world.setDifficulty(Difficulty.PEACEFUL);
-        world.setTime(8000);
+        world.setTime(12000);
         world.setGameRule(GameRule.DO_DAYLIGHT_CYCLE, false);
         world.setGameRule(GameRule.DO_MOB_SPAWNING, false);
         world.setGameRule(GameRule.DO_WEATHER_CYCLE, false);
         world.setGameRule(GameRule.NATURAL_REGENERATION, false);
         world.setBiome(0,0, Biome.PLAINS);
+        Block lamp1 = world.getBlockAt(0,20,0);
+        Block lamp2 = world.getBlockAt(31,20,0);
+        lamp1.setType(Material.REDSTONE_LAMP);
+        lamp2.setType(Material.REDSTONE_LAMP);
+        ((Lightable)lamp1.getBlockData()).setLit(true);
     }
 
     /**
@@ -236,8 +249,8 @@ public class MinecraftListener implements Listener {
     public void onBlockPlaced(BlockPlaceEvent event) {
         Block block = event.getBlock();
         Player player = event.getPlayer();
-        if (block.getType() == Material.BEDROCK) {
-            player.sendMessage("You cannot place Bedrock blocks");
+        if (block.getType() == Material.BEDROCK || block.getType() == Material.GRASS_BLOCK) {
+            player.sendMessage("You cannot place Bedrock or grass blocks");
             event.setCancelled(true);
         }
         logger.info("Block was placed with type {} {}",
@@ -261,7 +274,7 @@ public class MinecraftListener implements Listener {
         Block block = event.getBlock();
         Player player = event.getPlayer();
         // Don't destroy the bedrock layer
-        if (block.getType() == Material.BEDROCK) {
+        if (block.getType() == Material.BEDROCK || block.getType() == Material.GRASS_BLOCK) {
             event.setCancelled(true);
             player.sendMessage("You cannot destroy this");
             return;
@@ -312,14 +325,19 @@ public class MinecraftListener implements Listener {
     }
 
     /**
-     * Saves the players message and interrupts askEvaluation threads waiting for a response. // TODO adjust documentation
+     * Forwards chat messages from the player to the broker.
      */
     @EventHandler
     public void onPlayerChat(AsyncPlayerChatEvent event) {
         String playerName = event.getPlayer().getName();
         int gameId = client.getGameIdForPlayer(playerName);
-        currentMessages.put(gameId, event.getMessage());
-        MessageLatches.get(gameId).countDown();
+        client.sendTextMessage(gameId, event.getMessage());
+        event.setCancelled(true);  // Prevent that other players see the message
+    }
+
+
+    public void onBroadcast(BroadcastMessageEvent event) {
+        event.setCancelled(true);
     }
 
     /**
@@ -357,6 +375,7 @@ public class MinecraftListener implements Listener {
             throw e;
         }
     }
+
 
     /**
      * Saves all non-air blocks above the ground from a world to a csv-file.

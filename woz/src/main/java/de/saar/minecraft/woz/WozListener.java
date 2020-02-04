@@ -62,12 +62,13 @@ public class WozListener implements Listener {
         world.setThundering(false);
         world.setSpawnFlags(false, false);
         world.setDifficulty(Difficulty.PEACEFUL);
-        world.setTime(8000);
+        world.setTime(12000);
         world.setGameRule(GameRule.DO_DAYLIGHT_CYCLE, false);
         world.setGameRule(GameRule.DO_MOB_SPAWNING, false);
         world.setGameRule(GameRule.DO_WEATHER_CYCLE, false);
         world.setGameRule(GameRule.NATURAL_REGENERATION, false);
         world.setBiome(0,0, Biome.PLAINS);
+        // TODO: set game mode to creative
     }
 
     /**
@@ -157,7 +158,7 @@ public class WozListener implements Listener {
 
     @EventHandler
     public void onPlayerMove(PlayerMoveEvent event) {
-        event.getPlayer().sendMessage("You cannot walked around");
+        event.getPlayer().sendMessage("You cannot walk around");
         event.setCancelled(true);
     }
 

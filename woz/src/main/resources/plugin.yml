@@ -1,4 +1,4 @@
-main: de.saar.minecraft.woz.WOZPlugin
+main: de.saar.minecraft.woz.WozPlugin
 name: WoZPlugin
 version: 1.0.0
 description: Plugin to simulate the NLG system and planning system in a WoZ experiment

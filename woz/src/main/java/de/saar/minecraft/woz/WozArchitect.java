@@ -53,7 +53,6 @@ public class WozArchitect implements Architect {
             @Override
             public void run() {
                 listener.movePlayer(x, y, z, xDir, yDir, zDir);
-                listener.player.sendMessage("Next instruction: ");
 
                 //  wait for the wizard to hit enter, then continue.
                 //  If they don't hit enter in <waitTime> seconds send empty message
@@ -91,7 +90,6 @@ public class WozArchitect implements Architect {
                 Material material = Material.values()[type];
                 listener.placeBlock(x,y,z,material);
                 logger.info("{} block placed at {}-{}-{}", material, x, y, z);
-                listener.player.sendMessage("Next instruction: ");
                 //  wait for the wizard to hit enter, then continue.
                 //  If they don't hit enter in <waitTime> seconds send empty message
                 listener.wizardGaveInstructionLatch = new CountDownLatch(1);
@@ -129,8 +127,6 @@ public class WozArchitect implements Architect {
             public void run() {
                 listener.breakBlock(x, y, z);
 
-                listener.player.sendMessage("Next instruction: ");
-
                 //  wait for the wizard to hit enter, then continue.
                 //  If they don't hit enter in <waitTime> seconds send empty message
                 listener.wizardGaveInstructionLatch = new CountDownLatch(1);
@@ -154,6 +150,6 @@ public class WozArchitect implements Architect {
 
     @Override
     public String getArchitectInformation() {
-        return "WOZArchitect";
+        return "WozArchitect";
     }
 }

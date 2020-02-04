@@ -78,10 +78,7 @@ public class DummyMinecraftClient implements Client {
     public void sendWorldFileError(int gameId, String message) {
     }
 
-    public void sendEvaluationAnswer(int gameId, String message){
-    }
-
-    public void beginEvaluation(int gameId) {
+    public void sendTextMessage(int gameId, String message){
 
     }
 
