@@ -14,6 +14,7 @@ import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.StatusRuntimeException;
 import io.grpc.stub.StreamObserver;
+import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
 import org.apache.commons.collections4.BidiMap;
 import org.apache.commons.collections4.bidimap.DualHashBidiMap;
@@ -30,6 +31,8 @@ public class MinecraftClient implements Client {
     private static Logger logger = LogManager.getLogger(MinecraftClient.class);
 
     private BidiMap<String, Integer> activeGames;
+
+    private HashMap<Integer, TextStreamObserver> observers = new HashMap<>();
 
     private static CommunicationPlugin plugin;
 
@@ -79,6 +82,7 @@ public class MinecraftClient implements Client {
         // remember active games
         int gameId = worldSelect.getGameId();
         activeGames.put(playerName, gameId);
+        observers.put(gameId, new TextStreamObserver(gameId));
         return worldSelect.getName();
     }
 
@@ -107,7 +111,7 @@ public class MinecraftClient implements Client {
             .setYDirection(yDir)
             .setZDirection(zDir)
             .build();
-        nonblockingStub.handleStatusInformation(position, new TextStreamObserver(gameId));
+        nonblockingStub.handleStatusInformation(position, observers.get(gameId));
     }
 
     private class TextStreamObserver implements StreamObserver<TextMessage> {
@@ -159,7 +163,7 @@ public class MinecraftClient implements Client {
             .setZ(z)
             .setType(type)
             .build();
-        nonblockingStub.handleBlockPlaced(message, new TextStreamObserver(gameId));
+        nonblockingStub.handleBlockPlaced(message, observers.get(gameId));
     }
 
     /**
@@ -174,7 +178,7 @@ public class MinecraftClient implements Client {
             .setZ(z)
             .setType(type)
             .build();
-        nonblockingStub.handleBlockDestroyed(message, new TextStreamObserver(gameId));
+        nonblockingStub.handleBlockDestroyed(message, observers.get(gameId));
     }
 
     /**
@@ -208,7 +212,7 @@ public class MinecraftClient implements Client {
             .setGameId(gameId)
             .setText(message)
             .build();
-        nonblockingStub.handleTextMessage(request, new TextStreamObserver(gameId));
+        nonblockingStub.handleTextMessage(request, observers.get(gameId));
     }
 
 }

@@ -142,9 +142,9 @@ public class MinecraftListener implements Listener {
         activeWorlds.put(nextWorld.getName(), nextWorld);
 
         // Put items in players directory TODO: depending on the world?
-        player.getInventory().addItem(new ItemStack(Material.BLUE_WOOL, 1));
-        player.getInventory().addItem(new ItemStack(Material.RED_WOOL, 1));
-        player.getInventory().addItem(new ItemStack(Material.YELLOW_WOOL, 1));
+        if (!player.getInventory().contains(Material.BLUE_WOOL)){
+            player.getInventory().addItem(new ItemStack(Material.BLUE_WOOL, 1));
+        }
         player.setGameMode(GameMode.CREATIVE);
 
         // Create new preloaded world for the next player
@@ -166,7 +166,7 @@ public class MinecraftListener implements Listener {
         world.setThundering(false);
         world.setSpawnFlags(false, false);
         world.setDifficulty(Difficulty.PEACEFUL);
-        world.setTime(12000);
+        world.setTime(1200);
         world.setGameRule(GameRule.DO_DAYLIGHT_CYCLE, false);
         world.setGameRule(GameRule.DO_MOB_SPAWNING, false);
         world.setGameRule(GameRule.DO_WEATHER_CYCLE, false);

@@ -3,6 +3,7 @@ package de.saar.minecraft.woz;
 import de.saar.minecraft.architect.Architect;
 import de.saar.minecraft.shared.BlockDestroyedMessage;
 import de.saar.minecraft.shared.BlockPlacedMessage;
+import de.saar.minecraft.shared.GameId;
 import de.saar.minecraft.shared.StatusMessage;
 import de.saar.minecraft.shared.TextMessage;
 import de.saar.minecraft.shared.WorldSelectMessage;
@@ -146,6 +147,11 @@ public class WozArchitect implements Architect {
                 responseObserver.onCompleted();
             }
         }.start();
+    }
+
+    @Override
+    public void endGame(GameId gameId){
+        // TODO: remove all blocks except ground layer
     }
 
     @Override
