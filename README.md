@@ -17,20 +17,42 @@ run ./start.sh to download and compile and everything except the Minecraft clien
 
 then copy generated jar from `.../spigot-plugin/communication/build/libs/communication-1.0-SNAPSHOT-all.jar` to the plugin folder of the spigot server
 
-## Files in this repository
-### communication
-Plugin for communication between Minecraft and broker and setting up Minecraft for experiments
-
-### worldtest
-Plugin for test purposes that does not communicate with broker
-
-### server_files
-Copies of files of the spigot server that I modified
+## Setting up a Wizard of Oz server
+1. Set up a second Minecraft server running on a different port than the game Minecraft server
+2. Create the Wizard of Oz plugin with `./gradlew shadowJar` and copy it to the plugin folder of the server
+3. Start the WOZ-Minecraft server
+4. Start a broker
+5. Log in to WOZ-Minecraft server (as the wizard)
+6. Start the game Minecraft server
+7. A player logging in to the game Minecraft server now gets their instruction from the wizard
 
 ## Running the Minecraft server
 - start architect
 - start broker
 - start spigot server with plugin
+
+
+## Files in this repository
+### communication
+- CommunicationPlugin: Plugin for communication between Minecraft and broker and setting up Minecraft for experiments, is created with `> ./gradlew shadowJar`
+- WorldTestPlugin: Plugin for test purposes that does not communicate with broker, is created with `> ./gradlew worldTestShadowJar`
+- DefaultPlugin: contains shared methods of both plugins
+- Client: Interface for the clients
+- MinecraftClient: Handles communication with the broker
+- DummyMinecraftClient: For testing, hard-codes broker responses
+- MinecraftListener: Reacts to changes on the MinecraftServer 
+- FlatChunkGenerator: Helper class for creating flat, empty worlds
+
+
+### woz
+Plugin for Wizard of Oz experiments, substitutes an architect server and architect.
+
+Only one player can log in to its server to give instructions.
+
+### server_files
+Copies of files of the spigot server that I modified
+
+
 
 
 ## Links for Plugin Development
@@ -43,5 +65,5 @@ Copies of files of the spigot server that I modified
 - https://bukkit.org/threads/how-to-create-custom-world-generators.79066/
 
 ## Related third-party plugins
-- [https://dev.bukkit.org/projects/virtualplayers](https://dev.bukkit.org/projects/virtualplayers)
-- [https://www.spigotmc.org/resources/timed-scripts.28121/](https://www.spigotmc.org/resources/timed-scripts.28121/)
+- [https://dev.bukkit.org/projects/virtualplayers](https://dev.bukkit.org/projects/virtualplayers): For executing player commands without a real player
+- [https://www.spigotmc.org/resources/timed-scripts.28121/](https://www.spigotmc.org/resources/timed-scripts.28121/): For running automated test games

@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.nio.file.Paths;
 import java.util.HashMap;
@@ -82,9 +83,13 @@ public class MinecraftListener implements Listener {
     public void onPlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
         String playerName = player.getDisplayName();
+        String playerIp = player.getAddress().toString();
+        logger.info("Player ip full {}", playerIp);
+        logger.info("Player ip {}", player.getAddress().getHostName());
+        logger.info("Player port {}", player.getAddress().getPort());
         String structureFile;
         try {
-            structureFile = client.registerGame(playerName);
+            structureFile = client.registerGame(playerName, playerIp);
         } catch (UnknownHostException e) {
             player.sendMessage("You could not connect to the experiment server");
             logger.error("Player {} could not connect: {}", playerName, e);
@@ -240,10 +245,8 @@ public class MinecraftListener implements Listener {
             gameId, block.getX(),
             block.getY(),
             block.getZ());
-        String message = client.sendBlockPlaced(gameId, block.getX(), block.getY(), block.getZ(),
+        client.sendBlockPlaced(gameId, block.getX(), block.getY(), block.getZ(),
             block.getType().ordinal());
-        logger.info("Message to {}: {}", player.getName(), message);
-        player.sendMessage(message);
     }
 
     /**
@@ -263,10 +266,8 @@ public class MinecraftListener implements Listener {
             block.getType().name(), block.getType().ordinal());
         
         int gameId = client.getGameIdForPlayer(player.getName());
-        String message = client.sendBlockDestroyed(
+        client.sendBlockDestroyed(
             gameId, block.getX(), block.getY(), block.getZ(), block.getType().ordinal());
-        logger.info("Message to {}: {}", player.getName(), message);
-        player.sendMessage(message);
     }
 
     // TODO: what if block is not broken but just damaged?

@@ -1,29 +1,28 @@
 package de.saar.minecraft.communication;
 
-import de.saar.minecraft.shared.MinecraftServerError;
 import java.net.UnknownHostException;
-import java.util.HashMap;
+import org.apache.commons.collections4.BidiMap;
 
 public interface Client {
-    public void shutdown() throws InterruptedException;
+    void shutdown() throws InterruptedException;
 
-    public String registerGame(String playerName) throws UnknownHostException;
+    String registerGame(String playerName, String playerIp) throws UnknownHostException;
 
-    public void finishGame(int gameId);
+    void finishGame(int gameId);
 
-    public String sendPlayerPosition(int gameId, int x, int y, int z, double xDir, double yDir,
+    void sendPlayerPosition(int gameId, int x, int y, int z, double xDir, double yDir,
                                      double zDir);
 
-    public String sendBlockPlaced(int gameId, int x, int y, int z, int type);
+    void sendBlockPlaced(int gameId, int x, int y, int z, int type);
 
-    public String sendBlockDestroyed(int gameId, int x, int y, int z, int type);
+    void sendBlockDestroyed(int gameId, int x, int y, int z, int type);
 
-    public void sendMinecraftServerError(int gameId, String message);
+    void sendMinecraftServerError(int gameId, String message);
 
-    public void sendWorldFileError(int gameId, String message);
+    void sendWorldFileError(int gameId, String message);
 
     int getGameIdForPlayer(String playerName);
 
-    HashMap<String, Integer> getActiveGames();
+    BidiMap<String, Integer> getActiveGames();
 
 }

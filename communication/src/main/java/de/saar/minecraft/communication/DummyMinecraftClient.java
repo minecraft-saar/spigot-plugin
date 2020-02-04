@@ -1,29 +1,31 @@
 package de.saar.minecraft.communication;
 
-import java.net.UnknownHostException;
-import java.util.HashMap;
+import org.apache.commons.collections4.BidiMap;
+import org.apache.commons.collections4.bidimap.DualHashBidiMap;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 
 public class DummyMinecraftClient implements Client {
     private static Logger logger = LogManager.getLogger(MinecraftClient.class);
-    private HashMap<String, Integer> activeGames;
+    private BidiMap<String, Integer> activeGames;
     private int dummyGameId;
+    private WorldTestPlugin plugin;
 
-    public DummyMinecraftClient() {
-        activeGames = new HashMap<>();
+    public DummyMinecraftClient(WorldTestPlugin plugin) {
+        activeGames = new DualHashBidiMap<>();
         dummyGameId = 0;
+        this.plugin = plugin;
     }
 
 
-    public void shutdown() throws InterruptedException {
+    public void shutdown() {
     }
 
     /**
      * Starts a new game with the world "bridge".
      */
-    public String registerGame(String playerName) throws UnknownHostException {
+    public String registerGame(String playerName, String playerIp) {
         // remember active games
         activeGames.put(playerName, dummyGameId++);
         return "bridge";
@@ -38,26 +40,32 @@ public class DummyMinecraftClient implements Client {
         logger.info(activeGames.toString());
     }
 
-    public String sendPlayerPosition(int gameId, int x, int y, int z, double xDir, double yDir,
+    public void sendPlayerPosition(int gameId, int x, int y, int z, double xDir, double yDir,
                                      double zDir) {
-        return String.format("Your position is %d-%d-%d looking in direction %f-%f-%f",
+        String message = String.format("Your position is %d-%d-%d looking in direction %f-%f-%f",
             x, y, z, xDir, yDir, zDir);
+        String playerName = activeGames.getKey(gameId);
+        plugin.sendTextMessage(playerName, message);
     }
 
     public int getGameIdForPlayer(String playerName) {
         return this.activeGames.get(playerName);
     }
 
-    public HashMap<String, Integer> getActiveGames() {
+    public BidiMap<String, Integer> getActiveGames() {
         return this.activeGames;
     }
 
-    public String sendBlockPlaced(int gameId, int x, int y, int z, int type) {
-        return String.format("A %d block was placed at %d-%d-%d", type, x, y, z);
+    public void sendBlockPlaced(int gameId, int x, int y, int z, int type) {
+        String message = String.format("A %d block was placed at %d-%d-%d", type, x, y, z);
+        String playerName = activeGames.getKey(gameId);
+        plugin.sendTextMessage(playerName, message);
     }
 
-    public String sendBlockDestroyed(int gameId, int x, int y, int z, int type) {
-        return String.format("A %d block was destroyed at %d-%d-%d", type, x, y, z);
+    public void sendBlockDestroyed(int gameId, int x, int y, int z, int type) {
+        String message = String.format("A %d block was destroyed at %d-%d-%d", type, x, y, z);
+        String playerName = activeGames.getKey(gameId);
+        plugin.sendTextMessage(playerName, message);
     }
 
     public void sendMinecraftServerError(int gameId, String message) {

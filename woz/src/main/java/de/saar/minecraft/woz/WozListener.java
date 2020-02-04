@@ -29,9 +29,7 @@ import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
 
 
-
-
-public class WOZListener implements Listener {
+public class WozListener implements Listener {
 
     World displayWorld;
     Player player;
@@ -39,16 +37,17 @@ public class WOZListener implements Listener {
     ArrayList<String> savedMessages = new ArrayList<>();
     CountDownLatch wizardGaveInstructionLatch = new CountDownLatch(1);
 
-    private static Logger logger = LogManager.getLogger(WOZListener.class);
-    private final WOZPlugin plugin;
+    private static Logger logger = LogManager.getLogger(WozListener.class);
+    private final WozPlugin plugin;
 
 
-    WOZListener(WOZPlugin plugin) {
+    WozListener(WozPlugin plugin) {
         this.plugin = plugin;
         WorldCreator creator = new WorldCreator("display_world");
         creator.generator(new FlatChunkGenerator());
         creator.generateStructures(false);
         displayWorld = creator.createWorld();
+        assert displayWorld != null;
         prepareWorld(displayWorld);
     }
 
@@ -163,7 +162,7 @@ public class WOZListener implements Listener {
     }
 
     /**
-     * Saves the players message and interrupts Archtiect threads waiting for a wizard response.
+     * Saves the players message and interrupts Architect threads waiting for a wizard response.
      */
     @EventHandler
     public void onPlayerChat(AsyncPlayerChatEvent event) {
@@ -174,7 +173,7 @@ public class WOZListener implements Listener {
 
     void loadWorld(String worldName) {
         String filename = String.format("/de/saar/minecraft/worlds/%s.csv", worldName);
-        InputStream in = WOZArchitect.class.getResourceAsStream(filename);
+        InputStream in = WozArchitect.class.getResourceAsStream(filename);
         if (in != null) {
             BufferedReader reader = new BufferedReader(new InputStreamReader(in));
             // Make Bukkit call in loadPrebuiltStructure synchronous in main thread
@@ -190,7 +189,7 @@ public class WOZListener implements Listener {
                 }
             }.runTaskLater(this.plugin, 1);
         } else {
-            logger.error("World file is not found: {}", filename);;
+            logger.error("World file is not found: {}", filename);
         }
     }
 

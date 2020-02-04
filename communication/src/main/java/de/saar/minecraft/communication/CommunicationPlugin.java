@@ -1,27 +1,17 @@
 package de.saar.minecraft.communication;
 
 import java.util.List;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.bukkit.Location;
 import org.bukkit.World;
-import org.bukkit.entity.Player;
-import org.bukkit.generator.ChunkGenerator;
-import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitScheduler;
-import org.bukkit.util.Vector;
 
 
-public class CommunicationPlugin extends JavaPlugin {
-
-    MinecraftClient client;
+public class CommunicationPlugin extends DefaultPlugin {
     MinecraftListener listener;
-    private static Logger logger = LogManager.getLogger(CommunicationPlugin.class);
 
     // Fired when plugin is first enabled
     @Override
     public void onEnable() {
-        client = new MinecraftClient("localhost", 2802);
+        client = new MinecraftClient("localhost", 2802, this);
         listener = new MinecraftListener(client);
         getServer().getPluginManager().registerEvents(listener, this);
 
@@ -47,34 +37,6 @@ public class CommunicationPlugin extends JavaPlugin {
         for (int gameId: client.getActiveGames().values()) {
             client.finishGame(gameId);
         }
-    }
-
-    /**
-     * Gets the locations of all players on the server and sends StatusMessages to the broker.
-     */
-    public void getAllPlayerPositions() {
-        logger.debug(client.getActiveGames().toString());
-        for (Player player: getServer().getOnlinePlayers()) {
-            String playerName = player.getName();
-            int gameId = client.getGameIdForPlayer(playerName);
-            Location playerLocation = player.getLocation();
-            int xPos = (int)Math.round(playerLocation.getX());
-            int yPos = (int)Math.round(playerLocation.getY());
-            int zPos = (int)Math.round(playerLocation.getZ());
-            Vector direction = player.getEyeLocation().getDirection();
-            double xDir = direction.getX();
-            double yDir = direction.getY();
-            double zDir = direction.getZ();
-            System.out.println(direction);
-            String returnMessage = client.sendPlayerPosition(
-                gameId, xPos, yPos, zPos, xDir, yDir, zDir);
-            getServer().getPlayer(playerName).sendMessage(returnMessage);
-        }
-    }
-
-    @Override
-    public ChunkGenerator getDefaultWorldGenerator(String worldName, String id) {
-        return new FlatChunkGenerator();
     }
 
 }

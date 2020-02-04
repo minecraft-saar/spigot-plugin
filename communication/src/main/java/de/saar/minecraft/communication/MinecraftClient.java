@@ -13,11 +13,10 @@ import de.saar.minecraft.shared.WorldSelectMessage;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.StatusRuntimeException;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.util.HashMap;
-import java.util.Iterator;
+import io.grpc.stub.StreamObserver;
 import java.util.concurrent.TimeUnit;
+import org.apache.commons.collections4.BidiMap;
+import org.apache.commons.collections4.bidimap.DualHashBidiMap;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -30,16 +29,19 @@ public class MinecraftClient implements Client {
 
     private static Logger logger = LogManager.getLogger(MinecraftClient.class);
 
-    private HashMap<String, Integer> activeGames;
+    private BidiMap<String, Integer> activeGames;
+
+    private static CommunicationPlugin plugin;
 
     /**
      * Construct client connecting to Broker at {@code host:port}.
      */
-    public MinecraftClient(String host, int port) {
+    public MinecraftClient(String host, int port, CommunicationPlugin plugin) {
         this(ManagedChannelBuilder.forAddress(host, port).usePlaintext().build());
         // TODO: .build() here or change signature of next method to public
         //  RouteGuideClient(ManagedChannelBuilder<?> channelBuilder)
-        activeGames = new HashMap<>();
+        activeGames = new DualHashBidiMap<>();
+        MinecraftClient.plugin = plugin;
     }
 
     /**
@@ -60,17 +62,9 @@ public class MinecraftClient implements Client {
     /**
      * Registers a game with the broker. Returns a world name.
      */
-    public String registerGame(String playerName) throws UnknownHostException {
-        String hostname;
-        try {
-            hostname = InetAddress.getLocalHost().getHostName();
-        } catch (UnknownHostException e) {
-            logger.error("Hostname not found: " + e.getMessage());
-            throw e;
-        }
-
+    public String registerGame(String playerName, String playerIp) {
         GameData gameInfo = GameData.newBuilder()
-            .setClientAddress(hostname)
+            .setClientAddress(playerIp)
             .setPlayerName(playerName)
             .build();
 
@@ -102,11 +96,9 @@ public class MinecraftClient implements Client {
 
     /**
      * Sends a player's location and direction to the broker.
-     * @return the text message the broker send back
      */
-    public String sendPlayerPosition(int gameId, int x, int y, int z, double xDir, double yDir,
+    public void sendPlayerPosition(int gameId, int x, int y, int z, double xDir, double yDir,
                                      double zDir) {
-        // sendStatusMessage(gameId, x, y, z, xdir, ydir, zdir, new TextStreamObserver(gameId)
         StatusMessage position = StatusMessage.newBuilder()
             .setGameId(gameId)
             .setX(x)
@@ -116,31 +108,52 @@ public class MinecraftClient implements Client {
             .setYDirection(yDir)
             .setZDirection(zDir)
             .build();
-        Iterator<TextMessage> messageStream = blockingStub.handleStatusInformation(position);
-        StringBuilder result = new StringBuilder();
-        for (; messageStream.hasNext(); ) {
-            TextMessage m = messageStream.next();
-            logger.debug(m.getGameId());
-            logger.debug(m.getText());
-            result.append(m.getText());
-        }
-        return result.toString();
+        nonblockingStub.handleStatusInformation(position, new TextStreamObserver(gameId));
     }
+
+    private class TextStreamObserver implements StreamObserver<TextMessage> {
+        private int gameId;
+
+        public TextStreamObserver(int gameId) {
+            this.gameId = gameId;
+        }
+
+        @Override
+        public void onNext(TextMessage value) {
+            // verify that message is sent to correct player
+            assert gameId == value.getGameId();
+            String playerName = activeGames.getKey(gameId);
+            plugin.sendTextMessage(playerName, value.getText());
+        }
+
+        @Override
+        public void onError(Throwable t) {
+            logger.error(t.toString());
+        }
+
+        @Override
+        public void onCompleted() {
+        }
+    }
+
 
     public int getGameIdForPlayer(String playerName) {
         return this.activeGames.get(playerName);
     }
 
-    public HashMap<String, Integer> getActiveGames() {
+    public String getPlayernameFromGameId(int gameId) {
+        return this.activeGames.getKey(gameId);
+    }
+
+    public BidiMap<String, Integer> getActiveGames() {
         return this.activeGames;
     }
 
     /**
      * Sends a BlockPlacedMessage to the broker.
      * @param type an integer encoding the block material
-     * @return the text message the broker sends back
      */
-    public String sendBlockPlaced(int gameId, int x, int y, int z, int type) {
+    public void sendBlockPlaced(int gameId, int x, int y, int z, int type) {
         BlockPlacedMessage message = BlockPlacedMessage.newBuilder()
             .setGameId(gameId)
             .setX(x)
@@ -148,21 +161,14 @@ public class MinecraftClient implements Client {
             .setZ(z)
             .setType(type)
             .build();
-        Iterator<TextMessage> messageStream = blockingStub.handleBlockPlaced(message);
-        StringBuilder result = new StringBuilder();
-        for (; messageStream.hasNext(); ) {
-            TextMessage m = messageStream.next();
-            result.append(m.getText());
-        }
-        return result.toString();
+        nonblockingStub.handleBlockPlaced(message, new TextStreamObserver(gameId));
     }
 
     /**
      * Sends a BlockDestroyedMessage to the broker.
      * @param type an integer encoding the block material
-     * @return the text message the broker sends back
      */
-    public String sendBlockDestroyed(int gameId, int x, int y, int z, int type) {
+    public void sendBlockDestroyed(int gameId, int x, int y, int z, int type) {
         BlockDestroyedMessage message = BlockDestroyedMessage.newBuilder()
             .setGameId(gameId)
             .setX(x)
@@ -170,13 +176,7 @@ public class MinecraftClient implements Client {
             .setZ(z)
             .setType(type)
             .build();
-        Iterator<TextMessage> messageStream = blockingStub.handleBlockDestroyed(message);
-        StringBuilder result = new StringBuilder();
-        for (; messageStream.hasNext(); ) {
-            TextMessage m = messageStream.next();
-            result.append(m.getText());
-        }
-        return result.toString();
+        nonblockingStub.handleBlockDestroyed(message, new TextStreamObserver(gameId));
     }
 
     /**

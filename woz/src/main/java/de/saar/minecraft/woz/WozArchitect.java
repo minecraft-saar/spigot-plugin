@@ -14,17 +14,17 @@ import org.apache.logging.log4j.Logger;
 import org.bukkit.Material;
 
 
-public class WOZArchitect implements Architect {
+public class WozArchitect implements Architect {
     private int waitTime;
-    private WOZListener listener;
-    private static Logger logger = LogManager.getLogger(WOZArchitect.class);
+    private WozListener listener;
+    private static Logger logger = LogManager.getLogger(WozArchitect.class);
 
     /**
      * Initializes a Wizard of Oz Architect.
      * @param waitTime time in seconds that the wizards gets to type an answer
      * @param listener the WOZListener
      */
-    public WOZArchitect(int waitTime, WOZListener listener) {
+    public WozArchitect(int waitTime, WozListener listener) {
         this.waitTime = waitTime;
         this.listener = listener;
     }
