@@ -13,6 +13,7 @@ import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Objects;
+import java.util.concurrent.CountDownLatch;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -33,6 +34,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockDamageEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerGameModeChangeEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
@@ -48,6 +50,8 @@ public class MinecraftListener implements Listener {
     World nextWorld;  // Preloaded world for the next joining player
     HashMap<String, World> activeWorlds = new HashMap<>();
     int worldCounter = 0;
+    HashMap<Integer,String> currentMessages = new HashMap<Integer, String>();
+    HashMap<Integer, CountDownLatch> MessageLatches = new HashMap<Integer, CountDownLatch>(1);
 
     MinecraftListener(Client client) {
         super();
@@ -305,6 +309,17 @@ public class MinecraftListener implements Listener {
     @EventHandler
     public void onPlayerGameModeChangeEvent(PlayerGameModeChangeEvent event) {
         event.getPlayer().setGameMode(GameMode.CREATIVE);
+    }
+
+    /**
+     * Saves the players message and interrupts askEvaluation threads waiting for a response. // TODO adjust documentation
+     */
+    @EventHandler
+    public void onPlayerChat(AsyncPlayerChatEvent event) {
+        String playerName = event.getPlayer().getName();
+        int gameId = client.getGameIdForPlayer(playerName);
+        currentMessages.put(gameId, event.getMessage());
+        MessageLatches.get(gameId).countDown();
     }
 
     /**

@@ -13,7 +13,7 @@ import org.bukkit.util.Vector;
 public class DefaultPlugin extends JavaPlugin {
     Client client;
     MinecraftListener listener;
-    private static Logger logger = LogManager.getLogger(DefaultPlugin.class);
+    static Logger logger = LogManager.getLogger(DefaultPlugin.class);
 
     /**
      * Gets the locations of all players on the server and sends StatusMessages to the broker.
