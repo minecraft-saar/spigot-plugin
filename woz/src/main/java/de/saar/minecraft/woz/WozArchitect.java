@@ -148,12 +148,7 @@ public class WozArchitect implements Architect {
             }
         }.start();
     }
-
-    @Override
-    public void endGame(GameId gameId){
-        // TODO: remove all blocks except ground layer
-    }
-
+    
     @Override
     public String getArchitectInformation() {
         return "WozArchitect";
