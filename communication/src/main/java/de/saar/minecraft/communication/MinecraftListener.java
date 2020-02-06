@@ -13,6 +13,7 @@ import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
@@ -54,6 +55,10 @@ public class MinecraftListener implements Listener {
     HashMap<String, World> activeWorlds = new HashMap<>();
     int worldCounter = 0;
 
+    // Materials that can neither be placed or removed by the player
+    Set<Material> fixedMaterials = Set.of(Material.BEDROCK, Material.GRASS, Material.GRASS_BLOCK,
+        Material.DIRT, Material.COARSE_DIRT);
+
     MinecraftListener(Client client) {
         super();
         if (client == null) {
@@ -88,10 +93,13 @@ public class MinecraftListener implements Listener {
     public void onPlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
         String playerName = player.getDisplayName();
-        String playerIp = player.getAddress().toString();  // TODO: adjust for virtual players without an address
+
+        String playerIp = "";
+        InetSocketAddress address = player.getAddress();
+        if (address != null) {
+            playerIp = address.toString();
+        }
         logger.info("Player ip full {}", playerIp);
-        logger.info("Player ip {}", player.getAddress().getHostName());
-        logger.info("Player port {}", player.getAddress().getPort());
         String structureFile;
         try {
             structureFile = client.registerGame(playerName, playerIp);
@@ -142,7 +150,7 @@ public class MinecraftListener implements Listener {
         activeWorlds.put(nextWorld.getName(), nextWorld);
 
         // Put items in players directory TODO: depending on the world?
-        if (!player.getInventory().contains(Material.BLUE_WOOL)){
+        if (!player.getInventory().contains(Material.BLUE_WOOL)) {
             player.getInventory().addItem(new ItemStack(Material.BLUE_WOOL, 1));
         }
         player.setGameMode(GameMode.CREATIVE);
@@ -172,6 +180,8 @@ public class MinecraftListener implements Listener {
         world.setGameRule(GameRule.DO_WEATHER_CYCLE, false);
         world.setGameRule(GameRule.NATURAL_REGENERATION, false);
         world.setBiome(0,0, Biome.PLAINS);
+
+        // TODO: set up lamps or other light
         Block lamp1 = world.getBlockAt(0,20,0);
         Block lamp2 = world.getBlockAt(31,20,0);
         lamp1.setType(Material.REDSTONE_LAMP);
@@ -243,15 +253,17 @@ public class MinecraftListener implements Listener {
     }
 
     /**
-     * Notifies the client if a new block is placed. Prevents the placement of bedrock blocks.
+     * Notifies the client if a new block is placed.
+     * Prevents the placement of blocks from fixedMaterials.
      */
     @EventHandler
     public void onBlockPlaced(BlockPlaceEvent event) {
         Block block = event.getBlock();
         Player player = event.getPlayer();
-        if (block.getType() == Material.BEDROCK || block.getType() == Material.GRASS_BLOCK) {
-            player.sendMessage("You cannot place Bedrock or grass blocks");
+        if (fixedMaterials.contains(block.getType())) {
+            player.sendMessage("You cannot place blocks of this type");
             event.setCancelled(true);
+            return;
         }
         logger.info("Block was placed with type {} {}",
             block.getType().name(),
@@ -267,14 +279,14 @@ public class MinecraftListener implements Listener {
     }
 
     /**
-     * Notifies the client if a block is broken. Prevents breaking of bedrock blocks.
+     * Notifies the client if a block is broken.
+     * Prevents breaking of blocks from fixedMaterials.
      */
     @EventHandler
     public void onBlockDestroyed(BlockBreakEvent event) {
         Block block = event.getBlock();
         Player player = event.getPlayer();
-        // Don't destroy the bedrock layer
-        if (block.getType() == Material.BEDROCK || block.getType() == Material.GRASS_BLOCK) {
+        if (fixedMaterials.contains(block.getType())) {
             event.setCancelled(true);
             player.sendMessage("You cannot destroy this");
             return;

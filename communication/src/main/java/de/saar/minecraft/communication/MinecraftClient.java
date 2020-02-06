@@ -207,7 +207,10 @@ public class MinecraftClient implements Client {
         blockingStub.handleWorldFileError(request);
     }
 
-    public void sendTextMessage(int gameId, String message){
+    /**
+     * Sends a TextMessage to the broker
+     */
+    public void sendTextMessage(int gameId, String message) {
         TextMessage request = TextMessage.newBuilder()
             .setGameId(gameId)
             .setText(message)

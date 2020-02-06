@@ -1,5 +1,6 @@
 package de.saar.minecraft.communication;
 
+import java.util.Iterator;
 import java.util.List;
 import org.bukkit.World;
 import org.bukkit.scheduler.BukkitScheduler;
@@ -34,7 +35,8 @@ public class CommunicationPlugin extends DefaultPlugin {
             listener.deleteWorld(world);
         }
         // Finish all remaining games
-        for (int gameId: client.getActiveGames().values()) {
+        Integer[] runningGames = client.getActiveGames().values().toArray(new Integer[]{});
+        for (int gameId: runningGames) {
             client.finishGame(gameId);
         }
     }
