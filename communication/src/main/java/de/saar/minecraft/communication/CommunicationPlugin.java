@@ -1,6 +1,5 @@
 package de.saar.minecraft.communication;
 
-import java.util.Iterator;
 import java.util.List;
 import org.bukkit.World;
 import org.bukkit.scheduler.BukkitScheduler;

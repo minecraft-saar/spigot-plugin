@@ -148,7 +148,7 @@ public class WozArchitect implements Architect {
             }
         }.start();
     }
-    
+
     @Override
     public String getArchitectInformation() {
         return "WozArchitect";

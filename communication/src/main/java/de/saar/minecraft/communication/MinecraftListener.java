@@ -72,7 +72,10 @@ public class MinecraftListener implements Listener {
         for (File f : Objects.requireNonNull(directory.listFiles())) {
             if (f.getName().startsWith("playerworld_")) {
                 logger.info("File {} to be deleted", f.getName());
-                f.delete();  // TODO: check if removing worked
+                boolean deleted = f.delete();
+                if (!deleted){
+                    logger.error("File {} was not deleted.", f.getName());
+                }
             }
         }
 
@@ -383,54 +386,8 @@ public class MinecraftListener implements Listener {
             }
 
         } catch (IOException e) {
-            e.printStackTrace();  // TODO: log with logger not to standard error
+            logger.error(e.getMessage());
             throw e;
         }
-    }
-
-
-    /**
-     * Saves all non-air blocks above the ground from a world to a csv-file.
-     * @param filename csv-file where the blocks should be saved
-     * @param world the Bukkit world where the structure should be loaded
-     * @throws FileNotFoundException if it cannot write to "filename"
-     */
-    private void saveBuiltStructure(String filename, World world) throws FileNotFoundException {
-        WorldBorder border = world.getWorldBorder();
-        HashSet<Block> toSave = new HashSet<>();
-        Location center = border.getCenter();
-        int radius = ((Double)border.getSize()).intValue();  // TODO how to round here?
-
-        // Loop over height until there are only air blocks
-        boolean foundSolid = true;
-        int y = 1; // Upmost ground layer
-        while (foundSolid) {
-            foundSolid = false;
-            y++;
-            // Loop over every block in this plain
-            for (int x = center.getBlockX() - radius; x <= center.getBlockX() + radius; x++) {
-                for (int z = center.getBlockZ() - radius; z <= center.getBlockZ() + radius; z++) {
-                    Block currentBlock = world.getBlockAt(x,y,z);
-                    if (!currentBlock.getType().isAir()) {
-                        toSave.add(currentBlock);
-                        foundSolid = true;
-                        logger.debug("Adding to save set {}", currentBlock);
-                    }
-                }
-            }
-        }
-        // Save blocks
-        File csvOutputFile = new File(filename);
-        PrintWriter pw = new PrintWriter(csvOutputFile);
-        for (Block block:toSave) {
-            String line = String.format("%d,%d,%d,",
-                block.getX(),
-                block.getY(),
-                block.getZ())
-                + block.getType().name();
-            pw.println(line);
-            logger.info("Saved: {}", line);
-        }
-        pw.flush();
     }
 }
