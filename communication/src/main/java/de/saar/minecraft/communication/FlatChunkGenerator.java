@@ -36,7 +36,7 @@ public class FlatChunkGenerator extends ChunkGenerator {
         // Set ground blocks
         for (int x = 0; x < 16; x++) {
             for (int z = 0; z < 16; z++) {
-                chunk.setBlock(x, 1, z, Material.GRASS_BLOCK);
+                chunk.setBlock(x, 1, z, Material.LIME_CONCRETE);
                 chunk.setBlock(x, 0, z, Material.BEDROCK);
             }
         }

@@ -183,13 +183,6 @@ public class MinecraftListener implements Listener {
         world.setGameRule(GameRule.DO_WEATHER_CYCLE, false);
         world.setGameRule(GameRule.NATURAL_REGENERATION, false);
         world.setBiome(0,0, Biome.PLAINS);
-
-        // TODO: set up lamps or other light
-        Block lamp1 = world.getBlockAt(0,20,0);
-        Block lamp2 = world.getBlockAt(31,20,0);
-        lamp1.setType(Material.REDSTONE_LAMP);
-        lamp2.setType(Material.REDSTONE_LAMP);
-        ((Lightable)lamp1.getBlockData()).setLit(true);
     }
 
     /**

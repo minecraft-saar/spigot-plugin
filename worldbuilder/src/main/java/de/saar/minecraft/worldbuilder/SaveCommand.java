@@ -1,17 +1,12 @@
 package de.saar.minecraft.worldbuilder;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.util.HashSet;
 import org.apache.commons.lang.NotImplementedException;
-import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.LogManager;
-import org.bukkit.Bukkit;
+import org.apache.logging.log4j.Logger;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.WorldBorder;
@@ -35,7 +30,7 @@ public class SaveCommand implements CommandExecutor {
             World world = player.getWorld();
 
             // TODO: Check if given filename is valid
-            if (args.length != 1){
+            if (args.length != 1) {
                 return false;
             }
             String filename = args[0];
