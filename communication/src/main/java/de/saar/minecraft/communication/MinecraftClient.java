@@ -6,6 +6,7 @@ import de.saar.minecraft.shared.BlockDestroyedMessage;
 import de.saar.minecraft.shared.BlockPlacedMessage;
 import de.saar.minecraft.shared.GameId;
 import de.saar.minecraft.shared.MinecraftServerError;
+import de.saar.minecraft.shared.None;
 import de.saar.minecraft.shared.StatusMessage;
 import de.saar.minecraft.shared.TextMessage;
 import de.saar.minecraft.shared.WorldFileError;
@@ -23,6 +24,7 @@ import org.apache.logging.log4j.Logger;
 
 public class MinecraftClient implements Client {
 
+    private static NoneObserver noneObserver = new NoneObserver();
     private final ManagedChannel channel;
     private BrokerGrpc.BrokerBlockingStub blockingStub;
     private BrokerGrpc.BrokerStub nonblockingStub;
@@ -78,6 +80,10 @@ public class MinecraftClient implements Client {
 
         // remember active games
         int gameId = worldSelect.getGameId();
+        TextStreamObserver tso = new TextStreamObserver(gameId);
+        nonblockingStub.getMessageChannel(GameId.newBuilder().setId(gameId).build(), tso);
+        System.err.println("!!!!! obtained message channel");
+        logger.info("obtained message channel");
         activeGames.put(playerName, gameId);
 
         return worldSelect.getName();
@@ -108,9 +114,25 @@ public class MinecraftClient implements Client {
             .setYDirection(yDir)
             .setZDirection(zDir)
             .build();
-        nonblockingStub.handleStatusInformation(position, new TextStreamObserver(gameId));
+        nonblockingStub.handleStatusInformation(position, noneObserver);
     }
 
+      public static class NoneObserver implements StreamObserver<None> {
+        @Override
+        public void onNext(None value) {
+        }
+
+        @Override
+        public void onError(Throwable t) {
+            logger.error(t);
+        }
+
+        @Override
+        public void onCompleted() {
+        }
+    }
+
+  
     private class TextStreamObserver implements StreamObserver<TextMessage> {
         private int gameId;
 
@@ -161,7 +183,7 @@ public class MinecraftClient implements Client {
             .setZ(z)
             .setType(type)
             .build();
-        nonblockingStub.handleBlockPlaced(message, new TextStreamObserver(gameId));
+        nonblockingStub.handleBlockPlaced(message, noneObserver);
     }
 
     /**
@@ -176,7 +198,7 @@ public class MinecraftClient implements Client {
             .setZ(z)
             .setType(type)
             .build();
-        nonblockingStub.handleBlockDestroyed(message, new TextStreamObserver(gameId));
+        nonblockingStub.handleBlockDestroyed(message, noneObserver);
     }
 
     /**
