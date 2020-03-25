@@ -21,7 +21,11 @@ public interface Client {
 
     void sendWorldFileError(int gameId, String message);
 
+    void sendTextMessage(int gameId, String message);
+
     int getGameIdForPlayer(String playerName);
+
+    String getPlayernameFromGameId(int gameId);
 
     BidiMap<String, Integer> getActiveGames();
 

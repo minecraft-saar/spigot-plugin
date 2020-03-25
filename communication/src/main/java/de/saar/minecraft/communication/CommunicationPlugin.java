@@ -34,7 +34,8 @@ public class CommunicationPlugin extends DefaultPlugin {
             listener.deleteWorld(world);
         }
         // Finish all remaining games
-        for (int gameId: client.getActiveGames().values()) {
+        Integer[] runningGames = client.getActiveGames().values().toArray(new Integer[]{});
+        for (int gameId: runningGames) {
             client.finishGame(gameId);
         }
     }

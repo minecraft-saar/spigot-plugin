@@ -1,0 +1,12 @@
+main: de.saar.minecraft.worldbuilder.WorldBuilderPlugin
+name: WorldBuilderPlugin
+version: 1.0.0
+description: Saves modified worlds as csv-files
+api-version: 1.14
+commands:
+  example:
+    description: Example
+    usage: /<command>
+  save:
+    description: Saves the current state to a file
+    usage: /save <filename>

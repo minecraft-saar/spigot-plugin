@@ -9,6 +9,7 @@ import java.util.concurrent.CountDownLatch;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bukkit.Difficulty;
+import org.bukkit.GameMode;
 import org.bukkit.GameRule;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -62,7 +63,7 @@ public class WozListener implements Listener {
         world.setThundering(false);
         world.setSpawnFlags(false, false);
         world.setDifficulty(Difficulty.PEACEFUL);
-        world.setTime(8000);
+        world.setTime(1200);
         world.setGameRule(GameRule.DO_DAYLIGHT_CYCLE, false);
         world.setGameRule(GameRule.DO_MOB_SPAWNING, false);
         world.setGameRule(GameRule.DO_WEATHER_CYCLE, false);
@@ -87,6 +88,7 @@ public class WozListener implements Listener {
             player.sendMessage("Teleportation failed");
         }
         active = true;
+        player.setGameMode(GameMode.CREATIVE);
     }
 
     /**
@@ -157,7 +159,7 @@ public class WozListener implements Listener {
 
     @EventHandler
     public void onPlayerMove(PlayerMoveEvent event) {
-        event.getPlayer().sendMessage("You cannot walked around");
+        event.getPlayer().sendMessage("You cannot walk around");
         event.setCancelled(true);
     }
 

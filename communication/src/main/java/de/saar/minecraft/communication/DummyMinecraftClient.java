@@ -52,6 +52,10 @@ public class DummyMinecraftClient implements Client {
         return this.activeGames.get(playerName);
     }
 
+    public String getPlayernameFromGameId(int gameId) {
+        return this.activeGames.getKey(gameId);
+    }
+
     public BidiMap<String, Integer> getActiveGames() {
         return this.activeGames;
     }
@@ -72,6 +76,10 @@ public class DummyMinecraftClient implements Client {
     }
 
     public void sendWorldFileError(int gameId, String message) {
+    }
+
+    public void sendTextMessage(int gameId, String message){
+
     }
 
 }

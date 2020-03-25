@@ -13,7 +13,7 @@ import org.bukkit.util.Vector;
 public class DefaultPlugin extends JavaPlugin {
     Client client;
     MinecraftListener listener;
-    private static Logger logger = LogManager.getLogger(DefaultPlugin.class);
+    static Logger logger = LogManager.getLogger(DefaultPlugin.class);
 
     /**
      * Gets the locations of all players on the server and sends StatusMessages to the broker.
@@ -45,8 +45,9 @@ public class DefaultPlugin extends JavaPlugin {
         Player player = getServer().getPlayer(playerName);
         if (player != null) {
             player.sendMessage(message);
+            logger.info("Text message for {}: {}", playerName, message);
         } else {
-            logger.info("Player {} logged out before receiving message {}", playerName, message);
+            logger.warn("Player {} logged out before receiving message {}", playerName, message);
         }
     }
 

@@ -2,15 +2,19 @@ package de.saar.minecraft.communication;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.nio.file.Paths;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -22,9 +26,11 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
+import org.bukkit.WorldBorder;
 import org.bukkit.WorldCreator;
 import org.bukkit.block.Biome;
 import org.bukkit.block.Block;
+import org.bukkit.block.data.Lightable;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -39,7 +45,7 @@ import org.bukkit.event.server.BroadcastMessageEvent;
 import org.bukkit.event.weather.WeatherChangeEvent;
 import org.bukkit.event.world.StructureGrowEvent;
 import org.bukkit.event.world.WorldLoadEvent;
-import org.bukkit.util.Vector;
+import org.bukkit.inventory.ItemStack;
 
 
 public class MinecraftListener implements Listener {
@@ -131,7 +137,6 @@ public class MinecraftListener implements Listener {
 
         // Teleport player to own world
         Location teleportLocation = nextWorld.getSpawnLocation();
-        teleportLocation.setDirection(new Vector(-70,0,-70));
         boolean worked = player.teleport(teleportLocation);
         if (!worked) {
             logger.error("Teleportation failed");
@@ -144,13 +149,21 @@ public class MinecraftListener implements Listener {
         logger.info("Now in world {}", player.getWorld().getName());
         logger.debug("Now at block type: {}", teleportLocation.getBlock().getType());
 
+<<<<<<< HEAD
+
+=======
         // put a stone into the player's hand
         var inventory = player.getInventory();
         inventory.clear();
         inventory.setItem(0, new ItemStack(Material.STONE));
+>>>>>>> master
         // Add world to active worlds
         activeWorlds.put(nextWorld.getName(), nextWorld);
 
+        // Put items in players directory TODO: depending on the world?
+        if (!player.getInventory().contains(Material.BLUE_WOOL)) {
+            player.getInventory().addItem(new ItemStack(Material.BLUE_WOOL, 1));
+        }
         player.setGameMode(GameMode.CREATIVE);
 
         // Create new preloaded world for the next player

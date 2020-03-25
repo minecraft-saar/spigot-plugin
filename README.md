@@ -49,6 +49,13 @@ Plugin for Wizard of Oz experiments, substitutes an architect server and archite
 
 Only one player can log in to its server to give instructions.
 
+## worldbuilder
+Plugin to create initial world states which can later be loaded by the communication plugin
+- start a Minecraft Server with the compiled `WorldBuilderPlugin`
+- log in a player
+- build the structure that should be the initial world state
+- open the chat and enter `\save <filename.csv>`
+
 ### server_files
 Copies of files of the spigot server that I modified
 

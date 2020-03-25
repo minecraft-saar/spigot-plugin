@@ -117,7 +117,11 @@ public class MinecraftClient implements Client {
             .setYDirection(yDir)
             .setZDirection(zDir)
             .build();
+<<<<<<< HEAD
+        nonblockingStub.handleStatusInformation(position, observers.get(gameId));
+=======
         nonblockingStub.handleStatusInformation(position, noneObserver);
+>>>>>>> master
     }
 
       public static class NoneObserver implements StreamObserver<None> {
@@ -185,7 +189,11 @@ public class MinecraftClient implements Client {
             .setZ(z)
             .setType(type)
             .build();
+<<<<<<< HEAD
+        nonblockingStub.handleBlockPlaced(message, observers.get(gameId));
+=======
         nonblockingStub.handleBlockPlaced(message, noneObserver);
+>>>>>>> master
     }
 
     /**
@@ -200,7 +208,11 @@ public class MinecraftClient implements Client {
             .setZ(z)
             .setType(type)
             .build();
+<<<<<<< HEAD
+        nonblockingStub.handleBlockDestroyed(message, observers.get(gameId));
+=======
         nonblockingStub.handleBlockDestroyed(message, noneObserver);
+>>>>>>> master
     }
 
     /**
@@ -237,7 +249,7 @@ public class MinecraftClient implements Client {
             .setGameId(gameId)
             .setText(message)
             .build();
-        nonblockingStub.handleTextMessage(request, noneObserver);
+        nonblockingStub.handleTextMessage(request, observers.get(gameId));
     }
 
 }
