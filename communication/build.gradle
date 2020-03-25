@@ -19,6 +19,8 @@ repositories {
     mavenCentral()
 
     maven{url "https://hub.spigotmc.org/nexus/content/repositories/snapshots/"}
+    // For bungeecord which is required by spigotmc
+    maven{url "https://oss.sonatype.org/content/repositories/snapshots/"}
     maven {
         name = "GitHubPackages"
         url = uri("https://maven.pkg.github.com/minecraft-saar/spigot-plugin")

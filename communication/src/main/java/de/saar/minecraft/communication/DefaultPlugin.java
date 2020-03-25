@@ -45,8 +45,9 @@ public class DefaultPlugin extends JavaPlugin {
         Player player = getServer().getPlayer(playerName);
         if (player != null) {
             player.sendMessage(message);
+            logger.info("Text message for {}: {}", playerName, message);
         } else {
-            logger.info("Player {} logged out before receiving message {}", playerName, message);
+            logger.warn("Player {} logged out before receiving message {}", playerName, message);
         }
     }
 
