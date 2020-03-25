@@ -22,7 +22,7 @@ public class CommunicationPlugin extends DefaultPlugin {
             public void run() {
                 getAllPlayerPositions();
             }
-        }, 0L, 200L);  // One tick happens usually every 0.05 seconds, set later to 2L
+        }, 0L, 4L);  // One tick happens usually every 0.05 seconds, set later to 2L
     }
 
     // Fired when plugin is disabled

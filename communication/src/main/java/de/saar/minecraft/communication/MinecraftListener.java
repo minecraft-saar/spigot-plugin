@@ -22,6 +22,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.Difficulty;
 import org.bukkit.GameMode;
 import org.bukkit.GameRule;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
@@ -148,14 +149,13 @@ public class MinecraftListener implements Listener {
         logger.info("Now in world {}", player.getWorld().getName());
         logger.debug("Now at block type: {}", teleportLocation.getBlock().getType());
 
-
+        // put a stone into the player's hand
+        var inventory = player.getInventory();
+        inventory.clear();
+        inventory.setItem(0, new ItemStack(Material.STONE));
         // Add world to active worlds
         activeWorlds.put(nextWorld.getName(), nextWorld);
 
-        // Put items in players directory TODO: depending on the world?
-        if (!player.getInventory().contains(Material.BLUE_WOOL)) {
-            player.getInventory().addItem(new ItemStack(Material.BLUE_WOOL, 1));
-        }
         player.setGameMode(GameMode.CREATIVE);
 
         // Create new preloaded world for the next player
