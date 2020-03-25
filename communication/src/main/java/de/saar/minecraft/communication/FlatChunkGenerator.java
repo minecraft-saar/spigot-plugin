@@ -36,8 +36,8 @@ public class FlatChunkGenerator extends ChunkGenerator {
         // Set ground blocks
         for (int x = 0; x < 16; x++) {
             for (int z = 0; z < 16; z++) {
-                chunk.setBlock(x, 1, z, Material.LIME_CONCRETE);
-                chunk.setBlock(x, 0, z, Material.BEDROCK);
+                chunk.setBlock(x, 65, z, Material.LIME_CONCRETE);
+                chunk.setBlock(x, 64, z, Material.BEDROCK);
             }
         }
         return chunk;
@@ -45,6 +45,6 @@ public class FlatChunkGenerator extends ChunkGenerator {
 
     @Override
     public Location getFixedSpawnLocation(World world, Random random) {
-        return new Location(world, 16, 2, 16);
+        return new Location(world, 16, 66, 16);
     }  // Coordinates from 0 to 32 instead of -16 to 16
 }
