@@ -10,7 +10,7 @@ public class WorldTestPlugin extends DefaultPlugin {
     @Override
     public void onEnable() {
         client = new DummyMinecraftClient(this);
-        listener = new MinecraftListener(client);
+        listener = new MinecraftListener(client, this);
         getServer().getPluginManager().registerEvents(listener, this);
         // to get player position
         BukkitScheduler positionScheduler = getServer().getScheduler();

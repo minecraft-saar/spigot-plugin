@@ -23,6 +23,10 @@ public class DefaultPlugin extends JavaPlugin {
         for (Player player: getServer().getOnlinePlayers()) {
             String playerName = player.getName();
             int gameId = client.getGameIdForPlayer(playerName);
+            // skip players that are not in a game (yet)
+            if (gameId == -1) {
+                continue;
+            }
             Location playerLocation = player.getLocation();
             int xPos = (int)Math.round(playerLocation.getX());
             int yPos = (int)Math.round(playerLocation.getY());
@@ -31,7 +35,6 @@ public class DefaultPlugin extends JavaPlugin {
             double xDir = direction.getX();
             double yDir = direction.getY();
             double zDir = direction.getZ();
-            System.out.println(direction);
             client.sendPlayerPosition(gameId, xPos, yPos, zPos, xDir, yDir, zDir);
         }
     }

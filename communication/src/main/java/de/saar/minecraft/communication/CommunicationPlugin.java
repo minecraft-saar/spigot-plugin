@@ -12,7 +12,7 @@ public class CommunicationPlugin extends DefaultPlugin {
     @Override
     public void onEnable() {
         client = new MinecraftClient("localhost", 2802, this);
-        listener = new MinecraftListener(client);
+        listener = new MinecraftListener(client, this);
         getServer().getPluginManager().registerEvents(listener, this);
 
         // to get player position

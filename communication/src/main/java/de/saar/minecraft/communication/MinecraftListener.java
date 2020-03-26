@@ -11,6 +11,9 @@ import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -39,11 +42,13 @@ import org.bukkit.event.server.BroadcastMessageEvent;
 import org.bukkit.event.weather.WeatherChangeEvent;
 import org.bukkit.event.world.StructureGrowEvent;
 import org.bukkit.event.world.WorldLoadEvent;
+import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.scheduler.BukkitScheduler;
 import org.bukkit.util.Vector;
-
 
 public class MinecraftListener implements Listener {
     private static Logger logger = LogManager.getLogger(MinecraftListener.class);
+    private DefaultPlugin plugin;
     Client client;
     WorldCreator creator;
     World nextWorld;  // Preloaded world for the next joining player
@@ -54,12 +59,13 @@ public class MinecraftListener implements Listener {
     Set<Material> fixedMaterials = Set.of(Material.BEDROCK, Material.GRASS, Material.GRASS_BLOCK,
         Material.DIRT, Material.COARSE_DIRT);
 
-    MinecraftListener(Client client) {
+    MinecraftListener(Client client, DefaultPlugin plugin) {
         super();
         if (client == null) {
             throw new RuntimeException("No client was passed to the Listener");
         }
         this.client = client;
+        this.plugin = plugin;
 
         // remove all potentially existing player worlds
         File directory = Paths.get(".").toAbsolutePath().normalize().toFile();
@@ -89,8 +95,41 @@ public class MinecraftListener implements Listener {
      */
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                handlePlayerJoin(event);
+            }
+        }.runTaskAsynchronously(plugin);
+    }
+
+    private void execSync(Runnable task) {
+        var scheduler = plugin.getServer().getScheduler();
+        try {
+            scheduler.callSyncMethod​(plugin, Executors.callable(task)).get();
+        } catch (InterruptedException e) {
+            throw new RuntimeException("Interrupted exception happened");
+        } catch (ExecutionException e) {
+            throw new RuntimeException("Execution exception happened");
+        }
+    }
+
+    /**
+     * This method runs in its own thread.  Calls to bukkit need to be
+     * scheduled with the Minecraft server.
+     */
+    private void handlePlayerJoin(PlayerJoinEvent event) {
+
+
         Player player = event.getPlayer();
         String playerName = player.getDisplayName();
+        execSync(() -> {
+                player.sendMessage("Welcome to the server, " + playerName);
+                player.sendTitle("Welcome to the Minecraft-Saar experiment server!",
+                                 "We will move you to your own world shortly."
+                                 // ,10, 200,20
+                                 );
+            });
 
         String playerIp = "";
         InetSocketAddress address = player.getAddress();
@@ -102,11 +141,10 @@ public class MinecraftListener implements Listener {
         try {
             structureFile = client.registerGame(playerName, playerIp);
         } catch (UnknownHostException e) {
-            player.sendMessage("You could not connect to the experiment server");
+            execSync(() -> player.sendMessage("You could not connect to the experiment server"));
             logger.error("Player {} could not connect: {}", playerName, e);
             return;
         }
-        player.sendMessage("Welcome to the server, " + playerName);
         int gameId = client.getGameIdForPlayer(playerName);
 
         // Get correct structure file
@@ -114,51 +152,57 @@ public class MinecraftListener implements Listener {
         InputStream in = MinecraftListener.class.getResourceAsStream(filename);
         if (in != null) {
             BufferedReader reader = new BufferedReader(new InputStreamReader(in));
-            try {
-                loadPrebuiltStructure(reader, nextWorld);
-                logger.info("Loaded structure: {}", filename);
-            } catch (IOException e) {
-                logger.error("World file could not be loaded: {} {}", filename, e);
-                client.sendWorldFileError(
-                    gameId, "World file could not be loaded " + filename);
-                player.sendMessage("World file could not be loaded");
-            }
+            execSync(() -> {
+                    try {
+                        loadPrebuiltStructure(reader, nextWorld);
+                        logger.info("Loaded structure: {}", filename);
+                    } catch (IOException e) {
+                        logger.error("World file could not be loaded: {} {}", filename, e);
+                        client.sendWorldFileError(
+                                                  gameId, "World file could not be loaded " + filename);
+                        player.sendMessage("World file could not be loaded");
+                    }
+                });
         } else {
-            logger.error("World file is not found: {}", filename);
-            client.sendWorldFileError(gameId, "World file is not found " + filename);
-            player.sendMessage("World file is not found");
+            logger.error("World file could not be found: {}", filename);
+            client.sendWorldFileError(gameId, "World file could not be found " + filename);
+            execSync(() -> player.sendMessage("World file could not be found"));
         }
-
-        // Teleport player to own world
-        Location teleportLocation = nextWorld.getSpawnLocation();
-        teleportLocation.setDirection(new Vector(-70,0,-70));
-        boolean worked = player.teleport(teleportLocation);
-        if (!worked) {
-            logger.error("Teleportation failed");
-            client.sendMinecraftServerError(
-                gameId,
-                String.format("Player is in wrong world: %s instead of %s",
-                    player.getWorld().getName(), nextWorld.getName()));
-            player.sendMessage("Teleportation failed");
-        }
-        logger.info("Now in world {}", player.getWorld().getName());
-        logger.debug("Now at block type: {}", teleportLocation.getBlock().getType());
-
+        execSync(() -> {
+                Location teleportLocation = nextWorld.getSpawnLocation();
+                teleportLocation.setDirection(new Vector(-70,0,-70));
+                boolean worked = player.teleport(teleportLocation);
+                if (!worked) {
+                    logger.error("Teleportation failed");
+                    client.sendMinecraftServerError(
+                                                    gameId,
+                                                    String.format("Player is in wrong world: %s instead of %s",
+                                                                  player.getWorld().getName(), nextWorld.getName()));
+                    player.sendMessage("Teleportation failed");
+                }
+                logger.info("Now in world {}", player.getWorld().getName());
+                logger.debug("Now at block type: {}", teleportLocation.getBlock().getType());
+            });
         // put a stone into the player's hand
-        var inventory = player.getInventory();
-        inventory.clear();
-        inventory.setItem(0, new ItemStack(Material.STONE));
-        // Add world to active worlds
-        activeWorlds.put(nextWorld.getName(), nextWorld);
+        execSync(() -> {
+                // Add world to active worlds
+                activeWorlds.put(nextWorld.getName(), nextWorld);
+                player.setGameMode(GameMode.CREATIVE);
+                var inventory = player.getInventory();
+                inventory.clear();
+                inventory.setItem(0, new ItemStack(Material.STONE));
+            });
 
-        player.setGameMode(GameMode.CREATIVE);
-
-        // Create new preloaded world for the next player
-        String worldName = "playerworld_" + ++worldCounter;
-        creator = new WorldCreator(worldName);
-        creator.generator(new FlatChunkGenerator());
-        creator.generateStructures(false);
-        nextWorld = creator.createWorld();
+        // TODO this is probably not thread-safe and I don't know
+        // whether pre-generating the world is actually necessary.
+        execSync(() -> {
+                // Create new preloaded world for the next player
+                String worldName = "playerworld_" + ++worldCounter;
+                creator = new WorldCreator(worldName);
+                creator.generator(new FlatChunkGenerator());
+                creator.generateStructures(false);
+                nextWorld = creator.createWorld();
+            });
     }
 
     /**

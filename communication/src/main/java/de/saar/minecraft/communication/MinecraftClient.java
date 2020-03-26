@@ -161,8 +161,16 @@ public class MinecraftClient implements Client {
         }
     }
 
+    /**
+     * Returns the game ID or -1 if the player is currently not
+     * associated with a game.
+     */
     public int getGameIdForPlayer(String playerName) {
-        return this.activeGames.get(playerName);
+        Integer result = this.activeGames.get(playerName);
+        if (result == null) {
+            return -1;
+        }
+        return result;
     }
 
     public String getPlayernameFromGameId(int gameId) {
