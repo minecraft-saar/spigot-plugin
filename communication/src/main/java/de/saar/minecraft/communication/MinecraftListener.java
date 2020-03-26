@@ -106,7 +106,7 @@ public class MinecraftListener implements Listener {
     private void execSync(Runnable task) {
         var scheduler = plugin.getServer().getScheduler();
         try {
-            scheduler.callSyncMethod​(plugin, Executors.callable(task)).get();
+            scheduler.callSyncMethod(plugin, Executors.callable(task)).get();
         } catch (InterruptedException e) {
             throw new RuntimeException("Interrupted exception happened");
         } catch (ExecutionException e) {
