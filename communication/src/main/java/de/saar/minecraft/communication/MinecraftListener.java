@@ -183,11 +183,11 @@ public class MinecraftListener implements Listener {
                 logger.info("Now in world {}", player.getWorld().getName());
                 logger.debug("Now at block type: {}", teleportLocation.getBlock().getType());
             });
-        // put a stone into the player's hand
         execSync(() -> {
                 // Add world to active worlds
                 activeWorlds.put(nextWorld.getName(), nextWorld);
                 player.setGameMode(GameMode.CREATIVE);
+                // put a stone into the player's hand
                 var inventory = player.getInventory();
                 inventory.clear();
                 inventory.setItem(0, new ItemStack(Material.STONE));
