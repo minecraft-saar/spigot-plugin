@@ -51,7 +51,6 @@ public class MinecraftListener implements Listener {
     private DefaultPlugin plugin;
     Client client;
     WorldCreator creator;
-    World nextWorld;  // Preloaded world for the next joining player
     HashMap<String, World> activeWorlds = new HashMap<>();
     int worldCounter = 0;
 
@@ -79,13 +78,6 @@ public class MinecraftListener implements Listener {
                 }
             }
         }
-
-        creator = new WorldCreator("playerworld_0");
-        creator.generator(new FlatChunkGenerator());
-        creator.generateStructures(false);
-        nextWorld = creator.createWorld();
-        prepareWorld(nextWorld);
-        logger.info("World was created and prepared {}", nextWorld.getName());
     }
 
     /**
@@ -103,6 +95,9 @@ public class MinecraftListener implements Listener {
         }.runTaskAsynchronously(plugin);
     }
 
+    /**
+     * Executes task in the main thread and blocks until the task has finished.
+     */
     private void execSync(Runnable task) {
         var scheduler = plugin.getServer().getScheduler();
         try {
@@ -115,19 +110,25 @@ public class MinecraftListener implements Listener {
     }
 
     /**
+     * Executes the runnable in the main thread but does not wait for the result.
+     */
+    private void execLater(Runnable task) {
+        var scheduler = plugin.getServer().getScheduler();
+        scheduler.runTask(plugin, task);
+    }
+
+    /**
      * This method runs in its own thread.  Calls to bukkit need to be
      * scheduled with the Minecraft server.
      */
     private void handlePlayerJoin(PlayerJoinEvent event) {
-
-
         Player player = event.getPlayer();
         String playerName = player.getDisplayName();
-        execSync(() -> {
+        execLater(() -> {
                 player.sendMessage("Welcome to the server, " + playerName);
                 player.sendTitle("Welcome to the Minecraft-Saar experiment server!",
                                  "We will move you to your own world shortly."
-                                 // ,10, 200,20
+                                 ,10, 70,20
                                  );
             });
 
@@ -141,7 +142,7 @@ public class MinecraftListener implements Listener {
         try {
             structureFile = client.registerGame(playerName, playerIp);
         } catch (UnknownHostException e) {
-            execSync(() -> player.sendMessage("You could not connect to the experiment server"));
+            execLater(() -> player.sendMessage("You could not connect to the experiment server"));
             logger.error("Player {} could not connect: {}", playerName, e);
             return;
         }
@@ -150,26 +151,45 @@ public class MinecraftListener implements Listener {
         // Get correct structure file
         String filename = String.format("/de/saar/minecraft/worlds/%s.csv", structureFile);
         InputStream in = MinecraftListener.class.getResourceAsStream(filename);
+
+        World world;
+        try {
+            world = plugin.getServer().getScheduler().callSyncMethod(plugin, () -> {
+                // pre-populate the next world for the next player
+                String worldName = "playerworld_" + ++worldCounter;
+                creator = new WorldCreator(worldName);
+                creator.generator(new FlatChunkGenerator());
+                creator.generateStructures(false);
+                return creator.createWorld();
+            }).get();
+        } catch (InterruptedException e) {
+            throw new RuntimeException("World creation interrupted");
+        } catch (ExecutionException e) {
+            throw new RuntimeException("World creation interrupted");
+        }
+
         if (in != null) {
             BufferedReader reader = new BufferedReader(new InputStreamReader(in));
             execSync(() -> {
-                    try {
-                        loadPrebuiltStructure(reader, nextWorld);
-                        logger.info("Loaded structure: {}", filename);
-                    } catch (IOException e) {
-                        logger.error("World file could not be loaded: {} {}", filename, e);
-                        client.sendWorldFileError(
-                                                  gameId, "World file could not be loaded " + filename);
-                        player.sendMessage("World file could not be loaded");
-                    }
-                });
+                // First, populate the world
+                try {
+                    loadPrebuiltStructure(reader, world);
+                    logger.info("Loaded structure: {}", filename);
+                } catch (IOException e) {
+                    logger.error("World file could not be loaded: {} {}", filename, e);
+                    client.sendWorldFileError(
+                            gameId, "World file could not be loaded " + filename);
+                    player.sendMessage("World file could not be loaded");
+                }
+
+            });
         } else {
             logger.error("World file could not be found: {}", filename);
             client.sendWorldFileError(gameId, "World file could not be found " + filename);
             execSync(() -> player.sendMessage("World file could not be found"));
         }
         execSync(() -> {
-                Location teleportLocation = nextWorld.getSpawnLocation();
+                Location teleportLocation = world.getSpawnLocation();
                 teleportLocation.setDirection(new Vector(-70,0,-70));
                 boolean worked = player.teleport(teleportLocation);
                 if (!worked) {
@@ -177,31 +197,20 @@ public class MinecraftListener implements Listener {
                     client.sendMinecraftServerError(
                                                     gameId,
                                                     String.format("Player is in wrong world: %s instead of %s",
-                                                                  player.getWorld().getName(), nextWorld.getName()));
+                                                                  player.getWorld().getName(), world.getName()));
                     player.sendMessage("Teleportation failed");
                 }
                 logger.info("Now in world {}", player.getWorld().getName());
                 logger.debug("Now at block type: {}", teleportLocation.getBlock().getType());
             });
-        execSync(() -> {
+        execLater(() -> {
                 // Add world to active worlds
-                activeWorlds.put(nextWorld.getName(), nextWorld);
+                activeWorlds.put(world.getName(), world);
                 player.setGameMode(GameMode.CREATIVE);
                 // put a stone into the player's hand
                 var inventory = player.getInventory();
                 inventory.clear();
                 inventory.setItem(0, new ItemStack(Material.STONE));
-            });
-
-        // TODO this is probably not thread-safe and I don't know
-        // whether pre-generating the world is actually necessary.
-        execSync(() -> {
-                // Create new preloaded world for the next player
-                String worldName = "playerworld_" + ++worldCounter;
-                creator = new WorldCreator(worldName);
-                creator.generator(new FlatChunkGenerator());
-                creator.generateStructures(false);
-                nextWorld = creator.createWorld();
             });
     }
 

@@ -26,7 +26,7 @@ public class FlatChunkGenerator extends ChunkGenerator {
 
         Location chunkLocation = new Location(world, chunkX, 0, chunkZ);
         if (!border.isInside(chunkLocation)) {
-            logger.debug(String.format("Chunk %d-%d Outside border %d-%d",
+            logger.debug(() -> String.format("Chunk %d-%d Outside border %d-%d",
                 chunkLocation.getBlockX(),
                 chunkLocation.getBlockZ(),
                 border.getCenter().getBlockX(),
