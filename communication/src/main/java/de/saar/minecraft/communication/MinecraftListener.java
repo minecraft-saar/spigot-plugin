@@ -78,6 +78,10 @@ public class MinecraftListener implements Listener {
                 }
             }
         }
+        // Prepare initial world where players join
+        World baseWorld = Bukkit.getWorld("world");
+        prepareWorld(baseWorld);
+        baseWorld.getWorldBorder().reset();
     }
 
     /**
