@@ -130,9 +130,10 @@ public class MinecraftListener implements Listener {
         String playerName = player.getDisplayName();
         execLater(() -> {
                 player.sendMessage("Welcome to the server, " + playerName);
-                player.sendTitle("Welcome to the Minecraft-Saar experiment server!",
-                                 "We will move you to your own world shortly."
-                                 ,10, 70,20
+                player.sendMessage("We will teleport you to your own world shortly");
+                player.sendTitle("Welcome",
+                                 "to MC-Saar-Instruct!"
+                                 ,10, 120,20
                                  );
             });
 
