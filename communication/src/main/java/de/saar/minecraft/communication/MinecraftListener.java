@@ -308,6 +308,12 @@ public class MinecraftListener implements Listener {
     public void onBlockPlaced(BlockPlaceEvent event) {
         Block block = event.getBlock();
         Player player = event.getPlayer();
+        if (block.getWorld().getName().equals("world")) {
+            player.sendMessage("Please wait until the experiment begins");
+            event.setCancelled(true);
+            return;
+        }
+
         if (fixedMaterials.contains(block.getType())) {
             player.sendMessage("You cannot place blocks of this type");
             event.setCancelled(true);
@@ -334,6 +340,11 @@ public class MinecraftListener implements Listener {
     public void onBlockDestroyed(BlockBreakEvent event) {
         Block block = event.getBlock();
         Player player = event.getPlayer();
+        if (block.getWorld().getName().equals("world")) {
+            player.sendMessage("Please wait until the experiment begins");
+            event.setCancelled(true);
+            return;
+        }
         if (fixedMaterials.contains(block.getType())) {
             event.setCancelled(true);
             player.sendMessage("You cannot destroy this");
