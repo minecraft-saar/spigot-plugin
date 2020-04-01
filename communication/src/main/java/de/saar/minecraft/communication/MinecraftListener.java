@@ -217,6 +217,7 @@ public class MinecraftListener implements Listener {
                 inventory.clear();
                 inventory.setItem(0, new ItemStack(Material.STONE));
             });
+        client.playerReady(gameId);
     }
 
     /**

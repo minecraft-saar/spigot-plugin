@@ -31,6 +31,11 @@ public class DummyMinecraftClient implements Client {
         return "bridge";
     }
 
+    @Override
+    public void playerReady(int gameId) {
+
+    }
+
     /**
      * Ends the game.
      */

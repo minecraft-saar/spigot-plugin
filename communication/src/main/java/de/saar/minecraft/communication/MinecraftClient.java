@@ -16,6 +16,8 @@ import io.grpc.ManagedChannelBuilder;
 import io.grpc.StatusRuntimeException;
 import io.grpc.stub.StreamObserver;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import org.apache.commons.collections4.BidiMap;
 import org.apache.commons.collections4.bidimap.DualHashBidiMap;
@@ -33,6 +35,9 @@ public class MinecraftClient implements Client {
     private static Logger logger = LogManager.getLogger(MinecraftClient.class);
 
     private BidiMap<String, Integer> activeGames;
+
+    // Games in which the player is already in their own world
+    private Set<Integer> readyGames = new HashSet<>();
 
     private HashMap<Integer, TextStreamObserver> observers = new HashMap<>();
 
@@ -75,7 +80,9 @@ public class MinecraftClient implements Client {
 
         WorldSelectMessage worldSelect;
         try {
-            worldSelect = blockingStub.startGame(gameInfo);
+            synchronized (this) {
+                worldSelect = blockingStub.startGame(gameInfo);
+            }
         } catch (StatusRuntimeException e) {
             logger.error("RPC failed: " + e.getStatus());
             throw e;
@@ -84,23 +91,38 @@ public class MinecraftClient implements Client {
         // remember active games
         int gameId = worldSelect.getGameId();
         TextStreamObserver tso = new TextStreamObserver(gameId);
-        nonblockingStub.getMessageChannel(GameId.newBuilder().setId(gameId).build(), tso);
+        synchronized (this) {
+            nonblockingStub.getMessageChannel(GameId.newBuilder().setId(gameId).build(), tso);
+        }
         System.err.println("!!!!! obtained message channel");
-        logger.info("obtained message channel");
         activeGames.put(playerName, gameId);
+        logger.info("obtained message channel");
         observers.put(gameId, new TextStreamObserver(gameId));
         return worldSelect.getName();
+    }
+
+    /**
+     * Notifies the broker that the player is ready for instructions.
+     */
+    public void playerReady(int gameId) {
+        synchronized (this) {
+            blockingStub.playerReady(GameId.newBuilder().setId(gameId).build());
+        }
+        readyGames.add(gameId);
     }
 
     /**
      * Unregisters a game with the broker.
      */
     public void finishGame(int gameId) {
+        readyGames.remove(gameId);
         activeGames.values().remove(gameId);
         logger.info(String.format("Removed player %d", gameId));
         logger.info(activeGames.toString());
         GameId gameIdMessage = GameId.newBuilder().setId(gameId).build();
-        blockingStub.endGame(gameIdMessage);  // TODO: what to do with the void return
+        synchronized (this) {
+            blockingStub.endGame(gameIdMessage);  // TODO: what to do with the void return
+        }
     }
 
     /**
@@ -108,6 +130,10 @@ public class MinecraftClient implements Client {
      */
     public void sendPlayerPosition(int gameId, int x, int y, int z, double xDir, double yDir,
                                      double zDir) {
+        if (!readyGames.contains(gameId)) {
+            // only send updates once the player is in their own world.
+            return;
+        }
         StatusMessage position = StatusMessage.newBuilder()
             .setGameId(gameId)
             .setX(x)
@@ -117,7 +143,9 @@ public class MinecraftClient implements Client {
             .setYDirection(yDir)
             .setZDirection(zDir)
             .build();
-        nonblockingStub.handleStatusInformation(position, noneObserver);
+        synchronized (this) {
+            nonblockingStub.handleStatusInformation(position, noneObserver);
+        }
     }
 
       public static class NoneObserver implements StreamObserver<None> {
@@ -186,6 +214,10 @@ public class MinecraftClient implements Client {
      * @param type an integer encoding the block material
      */
     public void sendBlockPlaced(int gameId, int x, int y, int z, int type) {
+        if (!readyGames.contains(gameId)) {
+            // only send updates once the player is in their own world.
+            return;
+        }
         BlockPlacedMessage message = BlockPlacedMessage.newBuilder()
             .setGameId(gameId)
             .setX(x)
@@ -193,7 +225,9 @@ public class MinecraftClient implements Client {
             .setZ(z)
             .setType(type)
             .build();
-        nonblockingStub.handleBlockPlaced(message, noneObserver);
+        synchronized (this) {
+            nonblockingStub.handleBlockPlaced(message, noneObserver);
+        }
     }
 
     /**
@@ -201,6 +235,10 @@ public class MinecraftClient implements Client {
      * @param type an integer encoding the block material
      */
     public void sendBlockDestroyed(int gameId, int x, int y, int z, int type) {
+        if (!readyGames.contains(gameId)) {
+            // only send updates once the player is in their own world.
+            return;
+        }
         BlockDestroyedMessage message = BlockDestroyedMessage.newBuilder()
             .setGameId(gameId)
             .setX(x)
@@ -208,7 +246,9 @@ public class MinecraftClient implements Client {
             .setZ(z)
             .setType(type)
             .build();
-        nonblockingStub.handleBlockDestroyed(message, noneObserver);
+        synchronized (this) {
+            nonblockingStub.handleBlockDestroyed(message, noneObserver);
+        }
     }
 
     /**
@@ -221,7 +261,9 @@ public class MinecraftClient implements Client {
             .setGameId(gameId)
             .setMessage(message)
             .build();
-        blockingStub.handleMinecraftServerError(request);
+        synchronized (this) {
+            blockingStub.handleMinecraftServerError(request);
+        }
     }
 
     /**
@@ -234,18 +276,26 @@ public class MinecraftClient implements Client {
             .setGameId(gameId)
             .setMessage(message)
             .build();
-        blockingStub.handleWorldFileError(request);
+        synchronized (this) {
+            blockingStub.handleWorldFileError(request);
+        }
     }
 
     /**
      * Sends a TextMessage to the broker
      */
     public void sendTextMessage(int gameId, String message) {
+        if (!readyGames.contains(gameId)) {
+            // only send updates once the player is in their own world.
+            return;
+        }
         TextMessage request = TextMessage.newBuilder()
             .setGameId(gameId)
             .setText(message)
             .build();
-        nonblockingStub.handleTextMessage(request, noneObserver);
+        synchronized (this) {
+            nonblockingStub.handleTextMessage(request, noneObserver);
+        }
     }
 
 }
