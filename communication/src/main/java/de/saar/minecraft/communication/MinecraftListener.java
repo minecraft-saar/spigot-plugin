@@ -142,13 +142,13 @@ public class MinecraftListener implements Listener {
             });
         execLater(() ->
                 player.sendMessage("you can move around with w,a,s,d and look around with your mouse."),
-                100);
+                50);
         execLater(() ->
                 player.sendMessage("Place blocks with the RIGHT mouse button, delete with LEFT mouse button."),
                 100);
         execLater(() ->
                 player.sendMessage("press spacebar twice to fly and shift to dive."),
-                100);
+                150);
         String playerIp = "";
         InetSocketAddress address = player.getAddress();
         if (address != null) {
