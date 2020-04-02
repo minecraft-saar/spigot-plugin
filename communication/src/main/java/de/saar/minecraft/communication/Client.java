@@ -8,6 +8,8 @@ public interface Client {
 
     String registerGame(String playerName, String playerIp) throws UnknownHostException;
 
+    void playerReady(int gameId);
+
     void finishGame(int gameId);
 
     void sendPlayerPosition(int gameId, int x, int y, int z, double xDir, double yDir,

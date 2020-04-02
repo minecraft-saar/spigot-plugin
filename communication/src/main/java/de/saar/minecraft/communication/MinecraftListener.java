@@ -117,8 +117,12 @@ public class MinecraftListener implements Listener {
      * Executes the runnable in the main thread but does not wait for the result.
      */
     private void execLater(Runnable task) {
+        execLater(task, 0);
+    }
+
+    private void execLater(Runnable task, long delayTicks) {
         var scheduler = plugin.getServer().getScheduler();
-        scheduler.runTask(plugin, task);
+        scheduler.scheduleSyncDelayedTask(plugin, task, delayTicks);
     }
 
     /**
@@ -130,12 +134,21 @@ public class MinecraftListener implements Listener {
         String playerName = player.getDisplayName();
         execLater(() -> {
                 player.sendMessage("Welcome to the server, " + playerName);
-                player.sendTitle("Welcome to the Minecraft-Saar experiment server!",
-                                 "We will move you to your own world shortly."
-                                 ,10, 70,20
+                player.sendMessage("We will teleport you to your own world shortly");
+                player.sendTitle("Welcome",
+                                 "to MC-Saar-Instruct!"
+                                 ,10, 120,20
                                  );
             });
-
+        execLater(() ->
+                player.sendMessage("you can move around with w,a,s,d and look around with your mouse."),
+                50);
+        execLater(() ->
+                player.sendMessage("Place blocks with the RIGHT mouse button, delete with LEFT mouse button."),
+                100);
+        execLater(() ->
+                player.sendMessage("press spacebar twice to fly and shift to dive."),
+                150);
         String playerIp = "";
         InetSocketAddress address = player.getAddress();
         if (address != null) {
@@ -216,6 +229,7 @@ public class MinecraftListener implements Listener {
                 inventory.clear();
                 inventory.setItem(0, new ItemStack(Material.STONE));
             });
+        client.playerReady(gameId);
     }
 
     /**
