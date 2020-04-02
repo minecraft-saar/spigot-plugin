@@ -117,8 +117,12 @@ public class MinecraftListener implements Listener {
      * Executes the runnable in the main thread but does not wait for the result.
      */
     private void execLater(Runnable task) {
+        execLater(task, 0);
+    }
+
+    private void execLater(Runnable task, long delayTicks) {
         var scheduler = plugin.getServer().getScheduler();
-        scheduler.runTask(plugin, task);
+        scheduler.scheduleSyncDelayedTask(plugin, task, delayTicks);
     }
 
     /**
@@ -136,7 +140,15 @@ public class MinecraftListener implements Listener {
                                  ,10, 120,20
                                  );
             });
-
+        execLater(() ->
+                player.sendMessage("you can move around with w,a,s,d and look around with your mouse."),
+                100);
+        execLater(() ->
+                player.sendMessage("Place blocks with the RIGHT mouse button, delete with LEFT mouse button."),
+                100);
+        execLater(() ->
+                player.sendMessage("press spacebar twice to fly and shift to dive."),
+                100);
         String playerIp = "";
         InetSocketAddress address = player.getAddress();
         if (address != null) {
