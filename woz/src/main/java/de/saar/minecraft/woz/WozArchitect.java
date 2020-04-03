@@ -1,6 +1,6 @@
 package de.saar.minecraft.woz;
 
-import de.saar.minecraft.architect.Architect;
+import de.saar.minecraft.architect.AbstractArchitect;
 import de.saar.minecraft.shared.BlockDestroyedMessage;
 import de.saar.minecraft.shared.BlockPlacedMessage;
 import de.saar.minecraft.shared.GameId;
@@ -15,7 +15,7 @@ import org.apache.logging.log4j.Logger;
 import org.bukkit.Material;
 
 
-public class WozArchitect implements Architect {
+public class WozArchitect extends AbstractArchitect {
     private int waitTime;
     private WozListener listener;
     private static Logger logger = LogManager.getLogger(WozArchitect.class);
@@ -39,9 +39,12 @@ public class WozArchitect implements Architect {
     }
 
     @Override
-    public void handleStatusInformation(StatusMessage request,
-                                        StreamObserver<TextMessage> responseObserver) {
-        int gameId = request.getGameId();
+    public void playerReady() {
+
+    }
+
+    @Override
+    public void handleStatusInformation(StatusMessage request) {
         int x = request.getX();
         int y = request.getY();
         int z = request.getZ();
@@ -67,17 +70,13 @@ public class WozArchitect implements Architect {
 
                 String text = String.join(". ", listener.savedMessages);
                 listener.savedMessages.clear();
-                TextMessage message = TextMessage.newBuilder().setGameId(gameId).setText(text).build();
-
-                responseObserver.onNext(message);
-                responseObserver.onCompleted();
+                sendMessage(text);
             }
         }.start();
     }
 
     @Override
-    public void handleBlockPlaced(BlockPlacedMessage request,
-                                  StreamObserver<TextMessage> responseObserver) {
+    public void handleBlockPlaced(BlockPlacedMessage request) {
         int gameId = request.getGameId();
         int x = request.getX();
         int y = request.getY();
@@ -103,20 +102,14 @@ public class WozArchitect implements Architect {
 
                 String text = String.join(". ", listener.savedMessages);
                 listener.savedMessages.clear();
-
-                TextMessage message = TextMessage.newBuilder().setGameId(gameId).setText(text).build();
                 logger.info("Send message: " + text);
-
-                // send the text message back to the client
-                responseObserver.onNext(message);
-                responseObserver.onCompleted();
+                sendMessage(text);
             }
         }.start();
     }
 
     @Override
-    public void handleBlockDestroyed(BlockDestroyedMessage request,
-                                     StreamObserver<TextMessage> responseObserver) {
+    public void handleBlockDestroyed(BlockDestroyedMessage request) {
         int gameId = request.getGameId();
         int x = request.getX();
         int y = request.getY();
@@ -140,11 +133,7 @@ public class WozArchitect implements Architect {
 
                 String text = String.join(". ", listener.savedMessages);
                 listener.savedMessages.clear();
-
-                TextMessage message = TextMessage.newBuilder().setGameId(gameId).setText(text).build();
-
-                responseObserver.onNext(message);
-                responseObserver.onCompleted();
+                sendMessage(text);
             }
         }.start();
     }

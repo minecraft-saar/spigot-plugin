@@ -10,7 +10,7 @@ plugins {
 group "de.saar.minecraft.spigot-plugin"
 description "woz"
 
-version "1.0-SNAPSHOT"
+version "1.0.1"
 
 sourceCompatibility = 1.11
 
@@ -40,12 +40,12 @@ checkstyleTest {
 
 dependencies {
     testCompile group: "junit", name: "junit", version: "4.12"
-    implementation group: "org.spigotmc", name: "spigot-api", version: "1.14.4-R0.1-SNAPSHOT"
+    implementation group: "org.spigotmc", name: "spigot-api", version: "1.15.2-R0.1-SNAPSHOT"
     implementation "com.google.protobuf:protobuf-java:3.9.0"
     implementation "io.grpc:grpc-all:1.23.0"
-    implementation group: "de.saar.minecraft.infrastructure", name:"networking", version:"1.1.7"
-    implementation group: "de.saar.minecraft.infrastructure", name:"architect", version:"1.1.7"
     implementation group: "org.apache.logging.log4j", name: "log4j-core", version: "2.8.2"
     implementation group: "commons-io", name: "commons-io", version: "2.5"
-    implementation "de.saar.minecraft:shared-resources:1.1.2"
+    implementation group: "de.saar.minecraft.infrastructure", name: "networking", version: "1.1.10"
+    implementation group: "de.saar.minecraft.infrastructure", name: "architect", version: "1.1.10"
+    implementation group: "de.saar.minecraft", name: "shared-resources", version: "1.1.10"
 }

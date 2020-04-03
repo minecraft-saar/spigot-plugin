@@ -1,16 +1,13 @@
 package de.saar.minecraft.woz;
 
+import com.google.rpc.Code;
+import com.google.rpc.Status;
 import de.saar.minecraft.architect.ArchitectGrpc;
 import de.saar.minecraft.architect.ArchitectInformation;
-import de.saar.minecraft.shared.BlockDestroyedMessage;
-import de.saar.minecraft.shared.BlockPlacedMessage;
-import de.saar.minecraft.shared.GameId;
-import de.saar.minecraft.shared.StatusMessage;
-import de.saar.minecraft.shared.TextMessage;
-import de.saar.minecraft.shared.Void;
-import de.saar.minecraft.shared.WorldSelectMessage;
+import de.saar.minecraft.shared.*;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
+import io.grpc.protobuf.StatusProto;
 import io.grpc.stub.StreamObserver;
 import java.io.IOException;
 import org.apache.logging.log4j.LogManager;
@@ -76,7 +73,7 @@ public class WozArchitectServer {
 
     private class ArchitectImpl extends ArchitectGrpc.ArchitectImplBase {
 
-        public void hello(Void request, StreamObserver<ArchitectInformation> responseObserver) {
+        public void hello(None request, StreamObserver<ArchitectInformation> responseObserver) {
             WozArchitect arch = new WozArchitect(1, listener);
 
             responseObserver.onNext(
@@ -85,41 +82,84 @@ public class WozArchitectServer {
         }
 
 
-        public void startGame(WorldSelectMessage request, StreamObserver<Void> responseObserver) {
+        public void startGame(WorldSelectMessage request, StreamObserver<None> responseObserver) {
             if (arch == null) {
                 arch = new WozArchitect(10, listener);
             }
             arch.initialize(request);
 
-            responseObserver.onNext(Void.newBuilder().build());
+            responseObserver.onNext(None.getDefaultInstance());
             responseObserver.onCompleted();
 
-            logger.info("architect for id {}: {}", request.getGameId(),
-                arch.getArchitectInformation());
+            logger.info("architect for id {}: {}", request.getGameId(), arch);
         }
 
-
-        public void endGame(GameId request, StreamObserver<Void> responseObserver) {
-            logger.info("architect for id {} finished", request.getId());
-            arch = null;
-            responseObserver.onNext(Void.newBuilder().build());
-            responseObserver.onCompleted();
+        @Override
+        public void playerReady(GameId request, StreamObserver<None> responseObserver) {
+            if (arch != null) {
+                arch.playerReady();
+                responseObserver.onNext(None.getDefaultInstance());
+                responseObserver.onCompleted();
+            } else {
+                Status status = Status.newBuilder()
+                        .setCode(Code.INVALID_ARGUMENT.getNumber())
+                        .setMessage("No architect running")
+                        .build();
+                responseObserver.onError(StatusProto.toStatusRuntimeException(status));
+                logger.warn("could not find architect for message channel");
+            }
         }
 
-        public void handleStatusInformation(StatusMessage request,
-                                            StreamObserver<TextMessage> responseObserver) {
-            arch.handleStatusInformation(request, responseObserver);
-        }
-
-
-        public void handleBlockPlaced(BlockPlacedMessage request,
+        @Override
+        public void getMessageChannel(GameId request,
                                       StreamObserver<TextMessage> responseObserver) {
-            arch.handleBlockPlaced(request, responseObserver);
+            logger.info("architectServer getMessageChannel");
+            if (arch == null) {
+                Status status = Status.newBuilder()
+                        .setCode(Code.INVALID_ARGUMENT.getNumber())
+                        .setMessage("No architect running")
+                        .build();
+                responseObserver.onError(StatusProto.toStatusRuntimeException(status));
+                logger.warn("could not find architect for message channel");
+                return;
+            }
+
+            arch.setMessageChannel(responseObserver);
+            logger.info("set the message channel");
         }
 
-        public void handleBlockDestroyed(BlockDestroyedMessage request,
-                                         StreamObserver<TextMessage> responseObserver) {
-            arch.handleBlockDestroyed(request, responseObserver);
+
+        public void endGame(GameId request, StreamObserver<None> responseObserver) {
+            logger.info("architect for id {} finished", request.getId());
+            if (arch != null) {
+                arch.shutdown();
+            }
+            arch = null;
+            responseObserver.onNext(None.newBuilder().build());
+            responseObserver.onCompleted();
+        }
+
+        @Override
+        public void endAllGames(None request, StreamObserver<None> responseObserver) {
+            if (arch != null) {
+                arch.shutdown();
+            }
+            arch = null;
+            responseObserver.onNext(None.getDefaultInstance());
+            responseObserver.onCompleted();
+        }
+
+        public void handleStatusInformation(StatusMessage request, StreamObserver<None> responseObserver) {
+            arch.handleStatusInformation(request);
+        }
+
+
+        public void handleBlockPlaced(BlockPlacedMessage request, StreamObserver<None> responseObserver) {
+            arch.handleBlockPlaced(request);
+        }
+
+        public void handleBlockDestroyed(BlockDestroyedMessage request, StreamObserver<None> responseObserver) {
+            arch.handleBlockDestroyed(request);
         }
     }
 }

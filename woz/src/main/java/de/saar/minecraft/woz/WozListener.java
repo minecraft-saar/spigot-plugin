@@ -226,7 +226,7 @@ public class WozListener implements Listener {
             }
 
         } catch (IOException e) {
-            e.printStackTrace();  // TODO: log with logger not to standard error
+            logger.error(e.getMessage());
             throw e;
         }
     }
