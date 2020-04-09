@@ -6,11 +6,13 @@ import de.saar.minecraft.shared.BlockDestroyedMessage;
 import de.saar.minecraft.shared.BlockPlacedMessage;
 import de.saar.minecraft.shared.GameId;
 import de.saar.minecraft.shared.MinecraftServerError;
+import de.saar.minecraft.shared.NewGameState;
 import de.saar.minecraft.shared.None;
 import de.saar.minecraft.shared.StatusMessage;
 import de.saar.minecraft.shared.TextMessage;
 import de.saar.minecraft.shared.WorldFileError;
 import de.saar.minecraft.shared.WorldSelectMessage;
+
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.StatusRuntimeException;
@@ -177,6 +179,9 @@ public class MinecraftClient implements Client {
             assert gameId == value.getGameId();
             String playerName = activeGames.getKey(gameId);
             plugin.sendTextMessage(playerName, value.getText());
+            if (value.getNewGameState() == NewGameState.QuestionnaireFinished) {
+                plugin.delayedKickPlayer(playerName);
+            }
         }
 
         @Override

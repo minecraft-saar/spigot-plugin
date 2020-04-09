@@ -71,7 +71,7 @@ public class MinecraftListener implements Listener {
             if (f.getName().startsWith("playerworld_")) {
                 logger.info("File {} to be deleted", f.getName());
                 boolean deleted = f.delete();
-                if (!deleted){
+                if (!deleted) {
                     logger.error("File {} was not deleted.", f.getName());
                 }
             }

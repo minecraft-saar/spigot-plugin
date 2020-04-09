@@ -8,6 +8,7 @@ import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.generator.ChunkGenerator;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.scheduler.BukkitScheduler;
 import org.bukkit.util.Vector;
 
 public class DefaultPlugin extends JavaPlugin {
@@ -52,6 +53,19 @@ public class DefaultPlugin extends JavaPlugin {
         } else {
             logger.warn("Player {} logged out before receiving message {}", playerName, message);
         }
+    }
+
+    public void delayedKickPlayer(String playerName) {
+        getServer().getScheduler().scheduleSyncDelayedTask(this, new Runnable() {
+            @Override
+            public void run() {
+                Player player = getServer().getPlayer(playerName);
+                if (player != null) {
+                    player.kickPlayer("You have completed the experiment.");
+                }
+            }
+        }, 12000L);  // = 20 (ticks per second) * 60 (seconds per minute) * 10 (minutes)
+
     }
 
     @Override
