@@ -54,7 +54,7 @@ public class MinecraftListener implements Listener {
 
     // Materials that can neither be placed or removed by the player
     Set<Material> fixedMaterials = Set.of(Material.BEDROCK, Material.GRASS, Material.GRASS_BLOCK,
-        Material.DIRT, Material.COARSE_DIRT);
+        Material.DIRT, Material.COARSE_DIRT, Material.TNT, Material.LAVA);
 
     MinecraftListener(Client client, DefaultPlugin plugin) {
         super();
@@ -79,7 +79,8 @@ public class MinecraftListener implements Listener {
         // Prepare initial world where players join
         World baseWorld = Bukkit.getWorld("world");
         prepareWorld(baseWorld);
-        baseWorld.getWorldBorder().reset();
+        baseWorld.getWorldBorder().setSize(100);
+        baseWorld.setSpawnLocation(0, 66,0);
     }
 
     /**
@@ -246,6 +247,7 @@ public class MinecraftListener implements Listener {
         world.setGameRule(GameRule.DO_MOB_SPAWNING, false);
         world.setGameRule(GameRule.DO_WEATHER_CYCLE, false);
         world.setGameRule(GameRule.NATURAL_REGENERATION, false);
+        world.setGameRule(GameRule.ANNOUNCE_ADVANCEMENTS, false);
         Location location = world.getSpawnLocation();
         world.setBiome(location.getBlockX(), location.getBlockY(), location.getBlockZ(), Biome.PLAINS);
     }
