@@ -13,6 +13,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -80,7 +81,8 @@ public class MinecraftListener implements Listener {
         World baseWorld = Bukkit.getWorld("world");
         prepareWorld(baseWorld);
         baseWorld.getWorldBorder().setSize(100);
-        baseWorld.setSpawnLocation(0, 66,0);
+        baseWorld.setSpawnLocation(0, 2,0);
+        Bukkit.clearRecipes();
     }
 
     /**
@@ -131,6 +133,7 @@ public class MinecraftListener implements Listener {
     private void handlePlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
         String playerName = player.getDisplayName();
+
         execLater(() -> {
                 player.sendMessage("Welcome to the server, " + playerName);
                 player.sendMessage("We will teleport you to your own world shortly");

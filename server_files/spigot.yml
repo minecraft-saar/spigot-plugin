@@ -1,0 +1,202 @@
+# This is the main configuration file for Spigot.
+# As you can see, there's tons to configure. Some options may impact gameplay, so use
+# with caution, and make sure you know what each option does before configuring.
+# For a reference for any variable inside this file, check out the Spigot wiki at
+# http://www.spigotmc.org/wiki/spigot-configuration/
+# 
+# If you need help with the configuration or have any questions related to Spigot,
+# join us at the IRC or drop by our forums and leave a post.
+# 
+# IRC: #spigot @ irc.spi.gt ( http://www.spigotmc.org/pages/irc/ )
+# Forums: http://www.spigotmc.org/
+
+config-version: 12
+settings:
+  log-villager-deaths: true
+  debug: false
+  save-user-cache-on-stop-only: false
+  bungeecord: false
+  sample-count: 12
+  player-shuffle: 0
+  user-cache-size: 1000
+  moved-wrongly-threshold: 0.0625
+  moved-too-quickly-multiplier: 10.0
+  timeout-time: 120
+  restart-on-crash: false
+  restart-script: ./start.sh
+  netty-threads: 4
+  attribute:
+    maxHealth:
+      max: 2048.0
+    movementSpeed:
+      max: 2048.0
+    attackDamage:
+      max: 2048.0
+messages:
+  whitelist: You are not whitelisted on this server!
+  unknown-command: Unknown command. Type "/help" for help.
+  server-full: The server is full!
+  outdated-client: Outdated client! Please use {0}
+  outdated-server: Outdated server! I'm still on {0}
+  restart: Server is restarting
+commands:
+  log: true
+  tab-complete: 0
+  send-namespaced: true
+  spam-exclusions:
+  - /skill
+  silent-commandblock-console: false
+  replace-commands:
+  - setblock
+  - summon
+  - testforblock
+  - tellraw
+advancements:
+  disable-saving: true
+  disabled:
+  - minecraft:story/root
+  - minecraft:nether/root
+  - minecraft:end/root
+  - minecraft:adventure/root
+  - minecraft:husbandry/root
+  - minecraft:story/shiny_gear
+  - minecraft:end/elytra
+  - minecraft:adventure/summon_iron_golem
+  - minecraft:husbandry/break_diamond_hoe
+  - minecraft:story/obtain_armor
+  - minecraft:nether/return_to_sender
+  - minecraft:adventure/sleep_in_bed
+  - minecraft:story/lava_bucket
+  - minecraft:end/dragon_breath
+  - minecraft:end/kill_dragon
+  - minecraft:adventure/kill_all_mobs
+  - minecraft:story/enchant_item
+  - minecraft:nether/all_potions
+  - minecraft:story/follow_ender_eye
+  - minecraft:husbandry/tame_an_animal
+  - minecraft:nether/create_beacon
+  - minecraft:story/deflect_arrow
+  - minecraft:story/iron_tools
+  - minecraft:adventure/totem_of_undying
+  - minecraft:adventure/kill_a_mob
+  - minecraft:adventure/adventuring_time
+  - minecraft:nether/brew_potion
+  - minecraft:husbandry/plant_seed
+  - minecraft:end/dragon_egg
+  - minecraft:adventure/sniper_duel
+  - minecraft:end/levitate
+  - minecraft:nether/create_full_beacon
+  - minecraft:nether/summon_wither
+  - minecraft:husbandry/balanced_diet
+  - minecraft:nether/all_effects
+  - minecraft:nether/fast_travel
+  - minecraft:nether/get_wither_skull
+  - minecraft:husbandry/bred_all_animals
+  - minecraft:story/mine_stone
+  - minecraft:story/enter_the_nether
+  - minecraft:adventure/trade
+  - minecraft:nether/uneasy_alliance
+  - minecraft:story/mine_diamond
+  - minecraft:story/upgrade_tools
+  - minecraft:nether/find_fortress
+  - minecraft:story/cure_zombie_villager
+  - minecraft:story/form_obsidian
+  - minecraft:end/find_end_city
+  - minecraft:end/enter_end_gateway
+  - minecraft:nether/obtain_blaze_rod
+  - minecraft:adventure/shoot_arrow
+  - minecraft:story/enter_the_end
+  - minecraft:husbandry/breed_an_animal
+  - minecraft:end/respawn_dragon
+  - minecraft:story/smelt_iron
+  - minecraft:adventure/very_very_frightening
+  - minecraft:husbandry/fishy_business
+  - minecraft:adventure/two_birds_one_arrow
+  - minecraft:adventure/whos_the_pillager_now
+  - minecraft:husbandry/tactical_fishing
+  - minecraft:husbandry/silk_touch_nest
+  - minecraft:adventure/arbalistic
+  - minecraft:adventure/voluntary_exile
+  - minecraft:adventure/hero_of_the_village
+  - minecraft:husbandry/safely_harvest_honey
+  - minecraft:adventure/throw_trident
+  - minecraft:adventure/honey_block_slide
+  - minecraft:adventure/ol_betsy
+  - minecraft:husbandry/complete_catalogue
+stats:
+  disable-saving: false
+  forced-stats: {}
+world-settings:
+  default:
+    trident-despawn-rate: 1200
+    verbose: true
+    mob-spawn-range: 6
+    hopper-amount: 1
+    dragon-death-sound-radius: 0
+    seed-village: 10387312
+    seed-desert: 14357617
+    seed-igloo: 14357618
+    seed-jungle: 14357619
+    seed-swamp: 14357620
+    seed-monument: 10387313
+    seed-shipwreck: 165745295
+    seed-ocean: 14357621
+    seed-outpost: 165745296
+    seed-slime: 987234911
+    max-tnt-per-tick: 100
+    view-distance: default
+    wither-spawn-sound-radius: 0
+    enable-zombie-pigmen-portal-spawns: true
+    item-despawn-rate: 6000
+    arrow-despawn-rate: 1200
+    hanging-tick-frequency: 100
+    zombie-aggressive-towards-villager: true
+    nerf-spawner-mobs: false
+    merge-radius:
+      exp: 3.0
+      item: 2.5
+    growth:
+      cactus-modifier: 100
+      cane-modifier: 100
+      melon-modifier: 100
+      mushroom-modifier: 100
+      pumpkin-modifier: 100
+      sapling-modifier: 100
+      beetroot-modifier: 100
+      carrot-modifier: 100
+      potato-modifier: 100
+      wheat-modifier: 100
+      netherwart-modifier: 100
+      vine-modifier: 100
+      cocoa-modifier: 100
+      bamboo-modifier: 100
+      sweetberry-modifier: 100
+      kelp-modifier: 100
+    entity-activation-range:
+      animals: 32
+      monsters: 32
+      raiders: 48
+      misc: 16
+      tick-inactive-villagers: true
+    entity-tracking-range:
+      players: 48
+      animals: 48
+      monsters: 48
+      misc: 32
+      other: 64
+    ticks-per:
+      hopper-transfer: 8
+      hopper-check: 1
+    hunger:
+      jump-walk-exhaustion: 0.05
+      jump-sprint-exhaustion: 0.2
+      combat-exhaustion: 0.1
+      regen-exhaustion: 6.0
+      swim-multiplier: 0.01
+      sprint-multiplier: 0.1
+      other-multiplier: 0.0
+    max-tick-time:
+      tile: 50
+      entity: 50
+    squid-spawn-range:
+      min: 45.0
