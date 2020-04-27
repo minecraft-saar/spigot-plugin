@@ -6,7 +6,7 @@
 # run the server with cd server; java -jar spigot-1.14.4.jar
 # (or whatever the version of the server is now)
 
-SPIGOT_VERSION=1.14.4
+SPIGOT_VERSION=1.15.2
 
 set -e
 set -u
@@ -22,5 +22,8 @@ sed -i s/false/true/ eula.txt
 (cd ../communication/ ; ./gradlew shadowJar)
 
 mkdir -p plugins
-cp ../communication/build/libs/communication-*-all.jar plugins
-cp ../server_files/server.properties .
+cd plugins
+ln -s ../../communication/build/libs/communication-*-all.jar .
+cd ..
+rm -f server.properties
+ln -s ../server_files/server.properties .

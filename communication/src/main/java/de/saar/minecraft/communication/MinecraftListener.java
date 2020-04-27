@@ -142,15 +142,6 @@ public class MinecraftListener implements Listener {
                                  ,10, 120,20
                                  );
             });
-        execLater(() ->
-                player.sendMessage("you can move around with w,a,s,d and look around with your mouse."),
-                50);
-        execLater(() ->
-                player.sendMessage("Place blocks with the RIGHT mouse button, delete with LEFT mouse button."),
-                100);
-        execLater(() ->
-                player.sendMessage("press spacebar twice to fly and shift to dive."),
-                150);
         String playerIp = "";
         InetSocketAddress address = player.getAddress();
         if (address != null) {
@@ -170,7 +161,6 @@ public class MinecraftListener implements Listener {
         // Get correct structure file
         String filename = String.format("/de/saar/minecraft/worlds/%s.csv", structureFile);
         InputStream in = MinecraftListener.class.getResourceAsStream(filename);
-
         World world;
         try {
             world = plugin.getServer().getScheduler().callSyncMethod(plugin, () -> {
