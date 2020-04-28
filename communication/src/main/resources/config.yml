@@ -1,0 +1,18 @@
+updateFrequency: 5
+fixedMaterials:
+  - BEDROCK
+  - GRASS
+  - GRASS_BLOCK
+  - DIRT
+  - COARSE_DIRT
+  - TNT
+  - LAVA
+  - WATER
+
+clientPort: 2802
+
+worldFilePath: /de/saar/minecraft/worlds/
+
+startInventory:
+  - STONE
+  - RED_WOOL

@@ -5,16 +5,26 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bukkit.Location;
 import org.bukkit.World;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.generator.ChunkGenerator;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.scheduler.BukkitScheduler;
 import org.bukkit.util.Vector;
 
 public class DefaultPlugin extends JavaPlugin {
     Client client;
     MinecraftListener listener;
     static Logger logger = LogManager.getLogger(DefaultPlugin.class);
+    FileConfiguration config;
+
+    @Override
+    public void onEnable() {
+        this.saveDefaultConfig();
+        this.reloadConfig();
+        config = getConfig();
+        logger.info("Config file {} {}", config.getName(), config.getCurrentPath());
+        logger.info("Config {}", config.saveToString());
+    }
 
     /**
      * Gets the locations of all players on the server and sends StatusMessages to the broker.

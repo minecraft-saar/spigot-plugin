@@ -11,7 +11,12 @@ public class CommunicationPlugin extends DefaultPlugin {
     // Fired when plugin is first enabled
     @Override
     public void onEnable() {
-        client = new MinecraftClient("localhost", 2802, this);
+        super.onEnable();
+        // Get config values
+        long updateFrequency = config.getLong("updateFrequency", 4L);
+        int clientPort = config.getInt("clientPort", 2802);
+
+        client = new MinecraftClient("localhost", clientPort, this);
         listener = new MinecraftListener(client, this);
         getServer().getPluginManager().registerEvents(listener, this);
 
@@ -22,7 +27,7 @@ public class CommunicationPlugin extends DefaultPlugin {
             public void run() {
                 getAllPlayerPositions();
             }
-        }, 0L, 4L);  // One tick happens usually every 0.05 seconds, set later to 2L
+        }, 0L, updateFrequency);  // One tick happens usually every 0.05 seconds
     }
 
     // Fired when plugin is disabled

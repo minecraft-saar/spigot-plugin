@@ -9,6 +9,8 @@ import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.nio.file.Paths;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -54,8 +56,7 @@ public class MinecraftListener implements Listener {
     int worldCounter = 0;
 
     // Materials that can neither be placed or removed by the player
-    Set<Material> fixedMaterials = Set.of(Material.BEDROCK, Material.GRASS, Material.GRASS_BLOCK,
-        Material.DIRT, Material.COARSE_DIRT, Material.TNT, Material.LAVA);
+    Set<Material> fixedMaterials = new HashSet<>();
 
     MinecraftListener(Client client, DefaultPlugin plugin) {
         super();
@@ -64,6 +65,17 @@ public class MinecraftListener implements Listener {
         }
         this.client = client;
         this.plugin = plugin;
+
+        List<String> materialList = plugin.config.getStringList("fixedMaterials");
+        for (String name: materialList) {
+            Material newMaterial = Material.getMaterial(name);
+            if (newMaterial == null) {
+                logger.warn("{} is not a Material and can't be added to fixedMaterials", name);
+            } else {
+                fixedMaterials.add(newMaterial);
+            }
+        }
+        logger.info("Fixed materials: {}", fixedMaterials.toString());
 
         // remove all potentially existing player worlds
         File directory = Paths.get(".").toAbsolutePath().normalize().toFile();
@@ -159,7 +171,8 @@ public class MinecraftListener implements Listener {
         int gameId = client.getGameIdForPlayer(playerName);
 
         // Get correct structure file
-        String filename = String.format("/de/saar/minecraft/worlds/%s.csv", structureFile);
+        String path = plugin.config.getString("worldFilePath");
+        String filename = Paths.get(path, structureFile + ".csv").toString();
         InputStream in = MinecraftListener.class.getResourceAsStream(filename);
         World world;
         try {
@@ -219,7 +232,15 @@ public class MinecraftListener implements Listener {
                 // put a stone into the player's hand
                 var inventory = player.getInventory();
                 inventory.clear();
-                inventory.setItem(0, new ItemStack(Material.STONE));
+                var itemNames = plugin.config.getStringList("startInventory");
+                for (String name: itemNames) {
+                    Material material = Material.getMaterial(name);
+                    if (material == null) {
+                        logger.error("{} is not a valid material and can't be added to the inventory", name);
+                    } else {
+                        inventory.addItem(new ItemStack(material));
+                    }
+                }
             });
         client.playerReady(gameId);
     }

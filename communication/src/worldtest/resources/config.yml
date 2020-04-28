@@ -1,0 +1,19 @@
+updateFrequency: 200
+fixedMaterials:
+  - BEDROCK
+  - GRASS
+  - GRASS_BLOCK
+  - DIRT
+  - COARSE_DIRT
+  - TNT
+  - LAVA
+  - WATER
+  - MISSPELLED_MATERIAL
+
+clientPort: 2802
+
+worldFilePath: /de/saar/minecraft/worlds/
+
+startInventory:
+  - STONE
+  - BLUE_WOOL
