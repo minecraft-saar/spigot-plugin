@@ -17,3 +17,10 @@ worldFilePath: /de/saar/minecraft/worlds/
 startInventory:
   - STONE
   - BLUE_WOOL
+
+NotBannedPlayers:
+  - Minecraft_UdS_1
+  - Minecraft_UdS_2
+  - Minecraft_UdS_3
+  - Minecraft_UdS_4
+  - Minecraft_UdS_5

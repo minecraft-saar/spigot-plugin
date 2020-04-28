@@ -19,7 +19,9 @@ import java.util.concurrent.Executors;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bukkit.BanList;
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.Difficulty;
 import org.bukkit.GameMode;
 import org.bukkit.GameRule;
@@ -282,6 +284,14 @@ public class MinecraftListener implements Listener {
         activeWorlds.remove(world.getName());
         logger.info("Active worlds {}", activeWorlds.toString());
         logger.info("worlds bukkit {}", Bukkit.getWorlds().toString());
+
+        // Prevent player from doing the experiment again
+        List<String> unbannablePlayers = plugin.config.getStringList("NotBannedPlayers");
+        if (!unbannablePlayers.contains(player.getName())) {
+            BanList banList = Bukkit.getBanList(BanList.Type.NAME);
+            String banMessage = ChatColor.YELLOW + "You've already participated in this experiment";
+            banList.addBan(player.getName(), banMessage, null, "CommunicationPlugin");
+        }
     }
 
     /**
