@@ -14,6 +14,11 @@ SPIGOT_VERSION=${1:-1.15.2}
 mkdir -p server
 cd server
 
+if [[ -f .setup_complete ]]; then
+    echo "setup already completed"
+    exit
+fi
+
 wget https://hub.spigotmc.org/jenkins/job/BuildTools/lastSuccessfulBuild/artifact/target/BuildTools.jar
 java -jar BuildTools.jar --rev $SPIGOT_VERSION
 java -jar spigot-$SPIGOT_VERSION.jar
