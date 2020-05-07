@@ -6,10 +6,10 @@
 # run the server with cd server; java -jar spigot-1.14.4.jar
 # (or whatever the version of the server is now)
 
-SPIGOT_VERSION=1.15.2
-
 set -e
 set -u
+
+SPIGOT_VERSION=${1:-1.15.2}
 
 mkdir -p server
 cd server
@@ -27,3 +27,5 @@ ln -s ../../communication/build/libs/communication-*-all.jar .
 cd ..
 rm -f server.properties
 ln -s ../server_files/server.properties .
+
+touch .setup_complete
