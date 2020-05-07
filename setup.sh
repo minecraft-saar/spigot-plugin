@@ -31,7 +31,9 @@ cd plugins
 ln -s ../../communication/build/libs/communication-*-all.jar .
 cd ..
 rm -f server.properties
-ln -s ../server_files/server.properties .
+for f in server.properties bukkit.yml spigot.yml; do
+    ln -s ../server_files/$f .
+done
 
 cd ..
 touch .setup_complete
