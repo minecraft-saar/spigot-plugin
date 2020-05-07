@@ -28,4 +28,5 @@ cd ..
 rm -f server.properties
 ln -s ../server_files/server.properties .
 
+cd ..
 touch .setup_complete
