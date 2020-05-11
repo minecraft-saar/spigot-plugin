@@ -3,6 +3,7 @@ package de.saar.minecraft.communication;
 import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -16,6 +17,7 @@ public class DefaultPlugin extends JavaPlugin {
     MinecraftListener listener;
     static Logger logger = LogManager.getLogger(DefaultPlugin.class);
     FileConfiguration config;
+    ChatColor chatColor = ChatColor.WHITE;
 
     @Override
     public void onEnable() {
@@ -58,11 +60,15 @@ public class DefaultPlugin extends JavaPlugin {
     public void sendTextMessage(String playerName, String message) {
         Player player = getServer().getPlayer(playerName);
         if (player != null) {
-            player.sendMessage(message);
+            player.sendMessage(chatColor + message);
             logger.info("Text message for {}: {}", playerName, message);
         } else {
             logger.warn("Player {} logged out before receiving message {}", playerName, message);
         }
+    }
+
+    public void setChatColor(ChatColor newColor) {
+        chatColor = newColor;
     }
 
     public void delayedKickPlayer(String playerName) {
