@@ -10,4 +10,5 @@ if [[ ! -f .setup_complete ]]; then
     ./setup.sh $SPIGOT_VERSION
 fi
 
-java -jar server/spigot-$SPIGOT_VERSION.jar 
+cd server
+java -jar spigot-$SPIGOT_VERSION.jar 
