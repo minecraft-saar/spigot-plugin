@@ -29,6 +29,18 @@ sed -i s/false/true/ eula.txt
 mkdir -p plugins
 cd plugins
 ln -s ../../communication/build/libs/communication-*-all.jar .
+
+# copy the local whitelist
+mkdir CommunicationPlugin
+cp ../../communication/src/main/resources/config.yml CommunicationPlugin/
+WHITELIST_FILE=../../../../../whitelist.txt
+if test -f "$WHITELIST_FILE"; then
+    WHITELIST="$(<$WHITELIST_FILE)"
+    while read line; do
+        sed -i "/NotBannedPlayers:/a $line" CommunicationPlugin/config.yml
+    done < $WHITELIST_FILE
+fi
+
 cd ..
 rm -f server.properties
 for f in server.properties bukkit.yml spigot.yml; do

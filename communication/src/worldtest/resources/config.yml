@@ -1,10 +1,16 @@
 updateFrequency: 200
 fixedMaterials:
+  # ground layers
   - BEDROCK
+  - LIME_CONCRETE
+  # blocks that change / cause others to change easily
   - GRASS
   - GRASS_BLOCK
   - DIRT
   - COARSE_DIRT
+  - FARMLAND
+  - GRASS_PATH
+  # potentially dangerous
   - TNT
   - LAVA
   - WATER
