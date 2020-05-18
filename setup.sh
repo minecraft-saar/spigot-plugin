@@ -37,7 +37,7 @@ WHITELIST_FILE=../../../../../whitelist.txt
 if test -f "$WHITELIST_FILE"; then
     WHITELIST="$(<$WHITELIST_FILE)"
     while read line; do
-        sed -i "/NotBannedPlayers:/a $line" CommunicationPlugin/config.yml
+        sed -i "/NotBannedPlayers:/a \ \ $line" CommunicationPlugin/config.yml
     done < $WHITELIST_FILE
 fi
 
