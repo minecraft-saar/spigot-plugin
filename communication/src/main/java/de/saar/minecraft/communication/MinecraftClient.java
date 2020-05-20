@@ -25,7 +25,6 @@ import org.apache.commons.collections4.BidiMap;
 import org.apache.commons.collections4.bidimap.DualHashBidiMap;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bukkit.ChatColor;
 
 
 public class MinecraftClient implements Client {
@@ -180,9 +179,7 @@ public class MinecraftClient implements Client {
             assert gameId == value.getGameId();
             String playerName = activeGames.getKey(gameId);
             plugin.sendTextMessage(playerName, value.getText());
-            if (value.getNewGameState() == NewGameState.SuccessfullyFinished)  {
-                plugin.setChatColor(ChatColor.YELLOW);
-            } else if (value.getNewGameState() == NewGameState.QuestionnaireFinished) {
+            if (value.getNewGameState() == NewGameState.QuestionnaireFinished) {
                 plugin.delayedKickPlayer(playerName);
             }
         }
