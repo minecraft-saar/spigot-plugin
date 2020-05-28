@@ -1,5 +1,14 @@
 # spigot-plugin
 
+## Configuration for CommunicationPlugin
+- updateFrequency: How often the plugin should send status updates, measured in ticks. One tick happens usually every 0.05 seconds.
+- fixedMaterials: A list of block materials that can neither be placed nor destroyed by a player, e.g. `GRASS_BLOCK` or `LIME_CONCRETE`. A complete list of materials can be found in the [spigot javadocs](https://hub.spigotmc.org/javadocs/spigot/org/bukkit/Material.html) .
+- clientPort: The port on which the plugin is communicating with the broker.
+- worldFilePath: The path to the files with initial structures. When using `shared-resources` this should be `/de/saar/minecraft/worlds/`
+- startInventory: A list of blocks that a player will have in their inventory at the beginning of the experiment. For the format of the names see fixedMaterials above.
+- NotBannedPlayers: A list of player names that are not banned from the server after completing the experiment.
+
+
 ## fast default setup
 
 run ./start.sh to download and compile and everything except the Minecraft client.
@@ -12,7 +21,7 @@ run ./start.sh to download and compile and everything except the Minecraft clien
 5. Generate the communication plugin and copy it into `<your_server_directory>/plugins/`
 
 ## Creating plugin
-`> cd communication/`  
+`> cd communication/`
 `> ./gradlew shadowJar`
 
 then copy generated jar from `.../spigot-plugin/communication/build/libs/communication-1.0-SNAPSHOT-all.jar` to the plugin folder of the spigot server
@@ -49,10 +58,11 @@ Plugin for Wizard of Oz experiments, substitutes an architect server and archite
 
 Only one player can log in to its server to give instructions.
 
-## worldbuilder
+### worldbuilder
 Plugin to create initial world states which can later be loaded by the communication plugin
+
 - start a Minecraft Server with the compiled `WorldBuilderPlugin`
-- log in a player
+- log in as a player
 - build the structure that should be the initial world state
 - open the chat and enter `\save <filename.csv>`
 
@@ -67,9 +77,6 @@ Copies of files of the spigot server that I modified
 - [https://www.spigotmc.org/wiki/spigot-plugin-development/](https://www.spigotmc.org/wiki/spigot-plugin-development/)
 
 
-## Links for World Creation
-- https://bukkit.gamepedia.com/Developing_a_World_Generator_Plugin
-- https://bukkit.org/threads/how-to-create-custom-world-generators.79066/
 
 ## Related third-party plugins
 - [https://dev.bukkit.org/projects/virtualplayers](https://dev.bukkit.org/projects/virtualplayers): For executing player commands without a real player
