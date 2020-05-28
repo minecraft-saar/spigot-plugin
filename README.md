@@ -1,6 +1,8 @@
 # spigot-plugin
 
 ## Configuration for CommunicationPlugin
+The configuration of the CommunicationPlugin can be found at: `spigot-plugin/communication/src/main/resources/config.yml`
+
 - updateFrequency: How often the plugin should send status updates, measured in ticks. One tick happens usually every 0.05 seconds.
 - fixedMaterials: A list of block materials that can neither be placed nor destroyed by a player, e.g. `GRASS_BLOCK` or `LIME_CONCRETE`. A complete list of materials can be found in the [spigot javadocs](https://hub.spigotmc.org/javadocs/spigot/org/bukkit/Material.html) .
 - clientPort: The port on which the plugin is communicating with the broker.

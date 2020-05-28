@@ -14,7 +14,11 @@ fixedMaterials:
   - TNT
   - LAVA
   - WATER
-
+# used in the house experiment
+  - RED_WOOL
+  - BLACK_WOOL
+  - YELLOW_WOOL
+  - BLUE_WOOL
 
 clientPort: 2802
 
@@ -22,7 +26,8 @@ worldFilePath: /de/saar/minecraft/worlds/
 
 startInventory:
   - STONE
-  - RED_WOOL
+  - RED_CONCRETE
+
 
 NotBannedPlayers:
   - Minecraft_UdS_1
