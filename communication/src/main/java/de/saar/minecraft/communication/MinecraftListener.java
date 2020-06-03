@@ -106,6 +106,7 @@ public class MinecraftListener implements Listener {
      */
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
+	event.setJoinMessage(null);
         new BukkitRunnable() {
             @Override
             public void run() {
@@ -285,6 +286,7 @@ public class MinecraftListener implements Listener {
         logger.info("Active worlds {}", activeWorlds.toString());
         logger.info("worlds bukkit {}", Bukkit.getWorlds().toString());
 
+	event.setQuitMessage(null);
         // Prevent player from doing the experiment again
         List<String> unbannablePlayers = plugin.config.getStringList("NotBannedPlayers");
         if (!unbannablePlayers.contains(player.getName())) {
