@@ -26,3 +26,6 @@ build/
 .gradle/
 .idea/
 
+# files the setup script generates
+/server/
+.setup_complete

@@ -9,8 +9,6 @@
 set -e
 set -u
 
-SPIGOT_VERSION=${1:-1.15.2}
-
 mkdir -p server
 cd server
 
@@ -19,13 +17,18 @@ if [[ -f .setup_complete ]]; then
     exit
 fi
 
-wget https://hub.spigotmc.org/jenkins/job/BuildTools/lastSuccessfulBuild/artifact/target/BuildTools.jar
-java -jar BuildTools.jar --rev $SPIGOT_VERSION
-java -jar spigot-$SPIGOT_VERSION.jar
+wget https://papermc.io/api/v1/paper/1.15.2/350/download -O paper.jar
+# this call will fail, but also sets up all the files
+echo "please ignore the EULA warning below, this is part of the setup process"
+java -jar paper.jar
+
+# acknowledge EULA so we can start the server
 sed -i s/false/true/ eula.txt
 
+# build our plugin
 (cd ../communication/ ; ./gradlew shadowJar)
 
+# deploy plugin
 mkdir -p plugins
 cd plugins
 ln -s ../../communication/build/libs/communication-*-all.jar .
@@ -33,9 +36,8 @@ ln -s ../../communication/build/libs/communication-*-all.jar .
 # copy the local whitelist
 mkdir CommunicationPlugin
 cp ../../communication/src/main/resources/config.yml CommunicationPlugin/
-WHITELIST_FILE=../../../../../whitelist.txt
-if test -f "$WHITELIST_FILE"; then
-    WHITELIST="$(<$WHITELIST_FILE)"
+WHITELIST_FILE=~/minecraft-software/whitelist.txt
+if [[ -f $WHITELIST_FILE ]]; then
     while read line; do
         sed -i "/NotBannedPlayers:/a \ \ $line" CommunicationPlugin/config.yml
     done < $WHITELIST_FILE
@@ -44,7 +46,7 @@ fi
 cd ..
 rm -f server.properties
 for f in server.properties bukkit.yml spigot.yml; do
-    ln -s ../server_files/$f .
+    cp ../server_files/$f .
 done
 
 cd ..
