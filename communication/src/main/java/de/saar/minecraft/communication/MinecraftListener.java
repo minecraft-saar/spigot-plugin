@@ -150,11 +150,12 @@ public class MinecraftListener implements Listener {
         String playerName = player.getDisplayName();
 
         execLater(() -> {
-                player.sendMessage("Welcome to the server, " + playerName);
+		// Paper MC is so fast that users have little time to read this
+                // player.sendMessage("Welcome to the server, " + playerName);
                 player.sendMessage("We will teleport you to your own world shortly");
                 player.sendTitle("Welcome",
                                  "to MC-Saar-Instruct!"
-                                 ,10, 120,20
+                                 ,10, 80, 20
                                  );
             });
         String playerIp = "";
