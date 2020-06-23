@@ -34,12 +34,12 @@ dependencies {
     // mcsaar
     implementation "com.google.protobuf:protobuf-java:3.9.0"
     implementation "io.grpc:grpc-all:1.23.0"
-//    implementation group: "de.saar.minecraft.infrastructure", name:"networking", version:"1.1.12"
-    implementation group: "de.saar.minecraft.infrastructure", name:"broker", version:"1.1.11"
 //    implementation group: "de.saar.minecraft.spigot-plugin", name:"communication", version:"1.1.11"
     implementation files("/home/ca/Documents/Hiwi_Minecraft/spigot-plugin/communication/build/libs/communication-1.1-SNAPSHOT-all.jar")
     implementation 'com.eclipsesource.minimal-json:minimal-json:0.9.4'
     implementation "de.saar.minecraft:shared-resources:1.1.15"
+//    implementation group: 'de.saar.minecraft.infrastructure', name: 'networking', version: '1.1.13'
+    implementation group: 'de.saar.minecraft.infrastructure', name: 'broker', version: '1.1.13'
 
     // Database
     implementation "org.jooq:jooq:3.13.0"

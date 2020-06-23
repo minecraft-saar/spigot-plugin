@@ -7,11 +7,8 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.sql.Connection;
-import java.sql.Driver;
 import java.sql.DriverManager;
 import java.sql.SQLException;
-import java.util.Enumeration;
-import java.util.Iterator;
 
 import org.jooq.DSLContext;
 import org.jooq.Result;
@@ -21,6 +18,7 @@ import de.saar.minecraft.broker.db.Tables;
 import de.saar.minecraft.broker.db.tables.records.GameLogsRecord;
 
 public class ReplayPlugin extends JavaPlugin{
+    public ReplayListener listener;
     private FileConfiguration config;
     private DSLContext jooq;
     private static Logger logger = LogManager.getLogger(ReplayPlugin.class);
@@ -34,8 +32,9 @@ public class ReplayPlugin extends JavaPlugin{
         SelectGameCommand command = new SelectGameCommand(this);
         logger.info("command {}", command);
         this.getCommand("select").setExecutor(command);
+        // TODO: add stop replay and/or pause replay command
 
-        ReplayListener listener = new ReplayListener();
+        listener = new ReplayListener();
         getServer().getPluginManager().registerEvents(listener, this);
 
         // Get database connection
@@ -43,19 +42,8 @@ public class ReplayPlugin extends JavaPlugin{
         String user = config.getString("user");
         String password = config.getString("password");
 
-        logger.info("url {}", url);
-        logger.info("user {}", user);
-        logger.info("pw {}", password);
-
         Connection conn = null;
         try {
-            Enumeration<Driver> drivers = DriverManager.getDrivers();
-            for (Iterator<Driver> it = drivers.asIterator(); it.hasNext(); ) {
-                Driver d = it.next();
-                logger.info("Drivers {}", d);
-                logger.info("Drivers {}", d.toString());
-            }
-
             conn = DriverManager.getConnection(url, user, password);
             logger.info("conn {}", conn);
         } catch (SQLException throwables) {
@@ -81,6 +69,4 @@ public class ReplayPlugin extends JavaPlugin{
                 .orderBy(Tables.GAME_LOGS.ID.asc())
                 .fetch();
     }
-
-
 }

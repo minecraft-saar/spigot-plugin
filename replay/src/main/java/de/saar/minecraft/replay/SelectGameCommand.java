@@ -3,13 +3,13 @@ package de.saar.minecraft.replay;
 import com.eclipsesource.json.Json;
 import com.eclipsesource.json.JsonObject;
 import de.saar.minecraft.broker.db.GameLogsDirection;
-import de.saar.minecraft.broker.db.tables.GameLogs;
 import de.saar.minecraft.broker.db.tables.records.GameLogsRecord;
 import de.saar.minecraft.broker.db.tables.records.GamesRecord;
 import de.saar.minecraft.communication.FlatChunkGenerator;
 import de.saar.minecraft.communication.MinecraftListener;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -19,6 +19,7 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
 import org.jooq.Result;
 
@@ -27,7 +28,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.file.Paths;
-import java.sql.Timestamp;
+import java.time.LocalDateTime;
+
+import static java.time.temporal.ChronoUnit.MILLIS;
 
 public class SelectGameCommand implements CommandExecutor {
     private final ReplayPlugin plugin;
@@ -54,12 +57,18 @@ public class SelectGameCommand implements CommandExecutor {
         }
         prepareReplay(game, player);
 
-        startReplay(gameLog, player);
-
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                startReplay(gameLog, player);
+            }
+        }.runTaskAsynchronously(plugin);
         return true;
     }
 
     public void prepareReplay(GamesRecord game, Player player) {
+        player.teleport(Bukkit.getWorld("world").getSpawnLocation());
+        plugin.listener.deleteReplayWorld();
         // Prepare a new world
         String worldName = "replay_world";
         WorldCreator creator = new WorldCreator(worldName);
@@ -90,79 +99,98 @@ public class SelectGameCommand implements CommandExecutor {
 
         // Teleport
         player.teleport(replayWorld.getSpawnLocation());
+        plugin.listener.setMovementLocked(true);
+    }
 
-
+    private void execLater(Runnable task) {
+        var scheduler = plugin.getServer().getScheduler();
+        scheduler.scheduleSyncDelayedTask(plugin, task, 0);
     }
 
     public void startReplay(Result<GameLogsRecord> gameLog, Player player) {
-        World world = player.getWorld();
-        Timestamp oldTimestamp = gameLog.get(0).getTimestamp();
+        LocalDateTime oldTimestamp = gameLog.get(0).getTimestamp();
         for (GameLogsRecord record: gameLog) {
             String type = record.getMessageType();
             String message = record.getMessage();
-            Timestamp timestamp = record.getTimestamp();
+            LocalDateTime timestamp = record.getTimestamp();
             GameLogsDirection direction = record.getDirection();
 
-            // wait for the timestamp difference
-            int difference = timestamp.compareTo(oldTimestamp);
+            // wait for the timestamp difference TODO: check difference
+            long difference = oldTimestamp.until(timestamp, MILLIS);
+            oldTimestamp = timestamp;
+            difference = Long.max(difference - 20, 0);  // Each tick has 20 ms
+            // TODO: switch between mode automatic and only next message on click
             try {
-                Thread.sleep(difference);
+                Thread.sleep(difference / 100);
             } catch (InterruptedException e) {
-                player.sendMessage("waiting was interrupted");
+//                player.sendMessage("waiting was interrupted");
                 logger.error(e.getMessage());
             }
 
-
-            switch (type) {
-                case "LOG": {
-                    player.sendMessage(ChatColor.AQUA + message);
-                    break;
+            execLater(() -> {
+                World world = player.getWorld();
+                switch (type) {
+                    case "LOG": {
+                        player.sendMessage(ChatColor.AQUA + message);
+                        break;
+                    }
+                    case "StatusMessage": {
+                        // TODO: stop being teleported into existing blocks
+                        JsonObject object = Json.parse(message).asObject();
+                        int x = object.get("x").asInt();
+                        int y = object.get("y").asInt();
+                        int z = object.get("z").asInt();
+                        float xDirection = object.get("xDirection").asFloat();
+                        float yDirection;
+                        if (object.get("yDirection") != null) {
+                            yDirection = object.get("yDirection").asFloat();
+                        } else {
+                            // In the beginning after game is created, some yDirection values are missing
+                            yDirection = 0;
+                        }
+                        float zDirection = object.get("zDirection").asFloat();
+                        Location nextLocation = new Location(world, x, y, z);
+                        nextLocation.setDirection(new Vector(xDirection, yDirection, zDirection));
+                        player.teleport(nextLocation);
+                        break;
+                    }
+                    case "BlockPlacedMessage": {
+                        JsonObject object = Json.parse(message).asObject();
+                        int x = object.get("x").asInt();
+                        int y = object.get("y").asInt();
+                        int z = object.get("z").asInt();
+                        Material material = Material.values()[object.get("type").asInt()];
+                        world.getBlockAt(x, y, z).setType(material);
+                        break;
+                    }
+                    case "BlockDestroyedMessage": {
+                        JsonObject object = Json.parse(message).asObject();
+                        int x = object.get("x").asInt();
+                        int y = object.get("y").asInt();
+                        int z = object.get("z").asInt();
+                        world.getBlockAt(x, y, z).setType(Material.AIR);
+                        break;
+                    }
+                    case "TextMessage": {
+                        // TODO: distinguish between direction
+                        JsonObject object = Json.parse(message).asObject();
+                        String text = object.get("text").asString();
+                        player.sendMessage(ChatColor.WHITE + text);
+                        break;
+                    }
+                    // Ignore Architect logs
+                    case "BlocksCurrentObjectLeft":
+                    case "CurrentWorld":
+                    case "CurrentObject":
+                    case "NewOrientation":
+                    case "InitialPlan":
+                        break;
+                    default: {
+                        logger.warn("Unidentified message {}", type);
+                    }
                 }
-                case "StatusMessage": {
-//                    gameId": 4, "x": 16, "y": 66, "z": 16, "xDirection": -0.7071067811865476, "zDirection": -0.7071067811865475
-                    JsonObject object = Json.parse(message).asObject();
-                    int x = object.get("x").asInt();
-                    int y = object.get("y").asInt();
-                    int z = object.get("z").asInt();
-                    float xDirection = object.get("xDirection").asFloat();
-                    float yDirection = object.get("yDirection").asFloat();
-                    float zDirection = object.get("zDirection").asFloat();
-                    Location nextLocation = new Location(world, x,y,z);
-                    nextLocation.setDirection(new Vector(xDirection, yDirection, zDirection));
-                    player.teleport(nextLocation);
-                    break;
-                }
-                case "BlockPlacedMessage": {
-                    JsonObject object = Json.parse(message).asObject();
-                    int x = object.get("x").asInt();
-                    int y = object.get("y").asInt();
-                    int z = object.get("z").asInt();
-                    Material material = Material.values()[object.get("type").asInt()];
-                    world.getBlockAt(x,y,z).setType(material);
-                    break;
-                }
-                case "BlockDestroyedMessage": {
-                    JsonObject object = Json.parse(message).asObject();
-                    int x = object.get("x").asInt();
-                    int y = object.get("y").asInt();
-                    int z = object.get("z").asInt();
-                    world.getBlockAt(x,y,z).setType(Material.AIR);
-                    break;
-                }
-                case "TextMessage": {
-                    // TODO: distinguish between direction
-                    JsonObject object = Json.parse(message).asObject();
-                    String text = object.get("text").asString();
-                    player.sendMessage(ChatColor.WHITE + text);
-                    break;
-                }
-                default: {
-                    logger.warn("Unidentified message {}", type);
-
-                }
-            }
-
+            });
         }
-
+        plugin.listener.setMovementLocked(false);
     }
 }
