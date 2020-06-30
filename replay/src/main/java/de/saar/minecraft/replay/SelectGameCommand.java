@@ -35,6 +35,7 @@ import static java.time.temporal.ChronoUnit.MILLIS;
 public class SelectGameCommand implements CommandExecutor {
     private final ReplayPlugin plugin;
     private static final Logger logger = LogManager.getLogger(SelectGameCommand.class);
+    private BukkitRunnable current;
 
     public SelectGameCommand(ReplayPlugin plugin) {
         this.plugin = plugin;
@@ -47,6 +48,14 @@ public class SelectGameCommand implements CommandExecutor {
             return false;
         }
         Player player = (Player) sender;
+        // stop old replays
+        if (current != null) {
+            current.cancel();
+            logger.info("is cancelled {}", current.isCancelled());
+            int taskid = current.getTaskId();
+            Bukkit.getServer().getScheduler().cancelTask(taskid);
+            logger.info("is cancelled {}", current.isCancelled());
+        }
 
         int gameId = Integer.parseInt(args[0]);
         GamesRecord game = plugin.getGame(gameId);
@@ -57,12 +66,13 @@ public class SelectGameCommand implements CommandExecutor {
         }
         prepareReplay(game, player);
 
-        new BukkitRunnable() {
+        current = new BukkitRunnable() {
             @Override
             public void run() {
                 startReplay(gameLog, player);
             }
-        }.runTaskAsynchronously(plugin);
+        };
+        current.runTaskAsynchronously(plugin);
         return true;
     }
 
@@ -115,16 +125,18 @@ public class SelectGameCommand implements CommandExecutor {
             LocalDateTime timestamp = record.getTimestamp();
             GameLogsDirection direction = record.getDirection();
 
-            // wait for the timestamp difference TODO: check difference
-            long difference = oldTimestamp.until(timestamp, MILLIS);
-            oldTimestamp = timestamp;
-            difference = Long.max(difference - 20, 0);  // Each tick has 20 ms
             // TODO: switch between mode automatic and only next message on click
-            try {
-                Thread.sleep(difference / 100);
-            } catch (InterruptedException e) {
-//                player.sendMessage("waiting was interrupted");
-                logger.error(e.getMessage());
+            if (type.equals("StatusMessage")) {
+                // wait for the timestamp difference TODO: check difference
+                long difference = oldTimestamp.until(timestamp, MILLIS);
+                oldTimestamp = timestamp;
+//                difference = Long.max(difference - 20, 0);  // Each tick has 20 ms
+                difference = Long.max(difference, 0);  // Each tick has 20 ms
+                try {
+                    Thread.sleep(difference);
+                } catch (InterruptedException e) {
+                    logger.error(e.getMessage());
+                }
             }
 
             execLater(() -> {
@@ -137,10 +149,20 @@ public class SelectGameCommand implements CommandExecutor {
                     case "StatusMessage": {
                         // TODO: stop being teleported into existing blocks
                         JsonObject object = Json.parse(message).asObject();
-                        int x = object.get("x").asInt();
+                        int x;
+                        if (object.get("x") != null) {
+                            x = object.get("x").asInt();
+                        } else {
+                            x = 0;
+                        }
                         int y = object.get("y").asInt();
                         int z = object.get("z").asInt();
-                        float xDirection = object.get("xDirection").asFloat();
+                        float xDirection;
+                        if (object.get("xDirection") != null) {
+                            xDirection = object.get("xDirection").asFloat();
+                        } else {
+                            xDirection = 0;
+                        }
                         float yDirection;
                         if (object.get("yDirection") != null) {
                             yDirection = object.get("yDirection").asFloat();
@@ -175,7 +197,11 @@ public class SelectGameCommand implements CommandExecutor {
                         // TODO: distinguish between direction
                         JsonObject object = Json.parse(message).asObject();
                         String text = object.get("text").asString();
-                        player.sendMessage(ChatColor.WHITE + text);
+                        if (direction.equals(GameLogsDirection.PassToClient)) {
+                            player.sendMessage(ChatColor.WHITE + text);
+                        } else {
+                            player.sendMessage(ChatColor.YELLOW + text);
+                        }
                         break;
                     }
                     // Ignore Architect logs
@@ -184,6 +210,7 @@ public class SelectGameCommand implements CommandExecutor {
                     case "CurrentObject":
                     case "NewOrientation":
                     case "InitialPlan":
+                    case "GameId":
                         break;
                     default: {
                         logger.warn("Unidentified message {}", type);

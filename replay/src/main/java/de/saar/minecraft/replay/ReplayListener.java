@@ -1,5 +1,6 @@
 package de.saar.minecraft.replay;
 
+import de.saar.minecraft.communication.FlatChunkGenerator;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -12,6 +13,8 @@ import org.bukkit.block.Biome;
 import org.bukkit.entity.Entity;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
@@ -23,6 +26,21 @@ import java.io.IOException;
 public class ReplayListener implements Listener {
     static Logger logger = LogManager.getLogger(ReplayListener.class);
     boolean movementLocked = false;
+
+    ReplayListener() {
+        World world = Bukkit.getWorld("world");
+        world.setThundering(false);
+        world.setSpawnFlags(false, false);
+        world.setDifficulty(Difficulty.PEACEFUL);
+        world.setTime(1200);
+        world.setGameRule(GameRule.DO_DAYLIGHT_CYCLE, false);
+        world.setGameRule(GameRule.DO_MOB_SPAWNING, false);
+        world.setGameRule(GameRule.DO_WEATHER_CYCLE, false);
+        world.setGameRule(GameRule.NATURAL_REGENERATION, false);
+        world.setGameRule(GameRule.ANNOUNCE_ADVANCEMENTS, false);
+        Location location = world.getSpawnLocation();
+        world.setBiome(location.getBlockX(), location.getBlockY(), location.getBlockZ(), Biome.PLAINS);
+    }
 
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
@@ -39,7 +57,7 @@ public class ReplayListener implements Listener {
         World world = Bukkit.getWorld(name);
 
         if (world == null) {
-            logger.warn("replay_word not on server");
+            logger.warn("replay_world not on server");
             return;
         }
         for (Entity entity: world.getEntities()) {
@@ -61,6 +79,16 @@ public class ReplayListener implements Listener {
         } catch (IOException e) {
             logger.error(e.getMessage());
         }
+    }
+
+    @EventHandler
+    public void onBlockBreak(BlockBreakEvent event) {
+        event.setCancelled(true);
+    }
+
+    @EventHandler
+    public void onBlockPlace(BlockPlaceEvent event) {
+        event.setCancelled(true);
     }
 
     @EventHandler
