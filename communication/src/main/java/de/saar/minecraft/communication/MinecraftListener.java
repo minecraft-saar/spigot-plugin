@@ -285,12 +285,14 @@ public class MinecraftListener implements Listener {
         logger.info("Active worlds {}", activeWorlds.toString());
         logger.info("worlds bukkit {}", Bukkit.getWorlds().toString());
 
-        // Prevent player from doing the experiment again
-        List<String> unbannablePlayers = plugin.config.getStringList("NotBannedPlayers");
-        if (!unbannablePlayers.contains(player.getName())) {
-            BanList banList = Bukkit.getBanList(BanList.Type.NAME);
-            String banMessage = ChatColor.YELLOW + "You've already participated in this experiment";
-            banList.addBan(player.getName(), banMessage, null, "CommunicationPlugin");
+        if (plugin.config.getBoolean("banPlayers")) {
+            // Prevent player from doing the experiment again
+            List<String> unbannablePlayers = plugin.config.getStringList("NotBannedPlayers");
+            if (!unbannablePlayers.contains(player.getName())) {
+                BanList banList = Bukkit.getBanList(BanList.Type.NAME);
+                String banMessage = ChatColor.YELLOW + "You've already participated in this experiment";
+                banList.addBan(player.getName(), banMessage, null, "CommunicationPlugin");
+            }
         }
     }
 

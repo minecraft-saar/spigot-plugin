@@ -28,6 +28,7 @@ startInventory:
   - STONE
   - RED_CONCRETE
 
+banPlayers: true
 
 NotBannedPlayers:
   - Minecraft_UdS_1
