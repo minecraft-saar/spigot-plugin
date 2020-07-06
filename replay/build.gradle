@@ -1,0 +1,53 @@
+plugins {
+    id 'java'
+    id "com.github.johnrengelman.shadow" version "5.0.0"
+    id "checkstyle"
+}
+
+group 'org.example'
+version '1.0-SNAPSHOT'
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+
+    maven{url "https://hub.spigotmc.org/nexus/content/repositories/snapshots/"}
+    maven {
+        name = "GitHubPackages"
+        url = uri("https://maven.pkg.github.com/minecraft-saar/spigot-plugin")
+        credentials {
+            username = project.findProperty("gpr.user") ?: System.getenv("GPR_USER")
+            password = project.findProperty("gpr.key") ?: System.getenv("GPR_API_KEY")
+        }
+    }
+}
+
+dependencies {
+    testCompile group: "junit", name: "junit", version: "4.12"
+//    implementation group: "org.apache.commons", name:"commons-collections4", version:"4.1"
+    implementation group: "org.apache.logging.log4j", name: "log4j-core", version: "2.8.2"
+//    implementation group: "commons-io", name: "commons-io", version: "2.5"
+
+    // minecraft
+    implementation group: "org.spigotmc", name: "spigot-api", version: "1.15.2-R0.1-SNAPSHOT"
+
+    // mcsaar
+    implementation "com.google.protobuf:protobuf-java:3.9.0"
+    implementation "io.grpc:grpc-all:1.23.0"
+//    implementation group: "de.saar.minecraft.spigot-plugin", name:"communication", version:"1.1.11"
+    implementation files("/home/ca/Documents/Hiwi_Minecraft/spigot-plugin/communication/build/libs/communication-1.1-SNAPSHOT-all.jar")
+    implementation 'com.eclipsesource.minimal-json:minimal-json:0.9.4'
+    implementation "de.saar.minecraft:shared-resources:1.1.15"
+//    implementation group: 'de.saar.minecraft.infrastructure', name: 'networking', version: '1.1.13'
+    implementation group: 'de.saar.minecraft.infrastructure', name: 'broker', version: '1.1.13'
+
+    // Database
+    implementation "org.jooq:jooq:3.13.0"
+//    implementation "org.jooq:jooq-meta:3.13.0"
+//    jooqRuntime "org.jooq:jooq-meta-extensions:3.13.0"
+//    implementation "org.jooq:jooq-codegen:3.13.0"
+//    implementation "mariadb:mariadb-connector-java:5.1.6"
+    implementation "mysql:mysql-connector-java:5.1.6"
+    implementation 'org.mariadb.jdbc:mariadb-java-client:2.6.0'
+
+}
