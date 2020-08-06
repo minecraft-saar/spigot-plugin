@@ -8,6 +8,7 @@ The configuration of the CommunicationPlugin can be found at: `spigot-plugin/com
 - clientPort: The port on which the plugin is communicating with the broker.
 - worldFilePath: The path to the files with initial structures. When using `shared-resources` this should be `/de/saar/minecraft/worlds/`
 - startInventory: A list of blocks that a player will have in their inventory at the beginning of the experiment. For the format of the names see fixedMaterials above.
+- banPlayers: `true` if players should be banned after completing their firs experiment, `false` for unlimited logging in
 - NotBannedPlayers: A list of player names that are not banned from the server after completing the experiment.
 
 
