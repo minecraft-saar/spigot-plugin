@@ -79,6 +79,22 @@ Plugin to create initial world states which can later be loaded by the communica
 ### replay
 Draft of a Replay Plugin that shows games from the database.
 
+### materialfinder
+Script that gives the Minecraft material name for a given material id / number.
+
+Usage:
+
+`> ./gradlew run --args <int>`
+
+e.g.
+```
+./gradlew run --args 35
+
+> Task :run
+Material 35 is BAT_SPAWN_EGG
+```
+
+
 ### server_files
 Copies of files of the spigot server that I modified
 
