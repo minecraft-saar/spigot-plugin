@@ -15,6 +15,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
@@ -25,7 +26,6 @@ import org.bukkit.ChatColor;
 import org.bukkit.Difficulty;
 import org.bukkit.GameMode;
 import org.bukkit.GameRule;
-import org.bukkit.inventory.ItemStack;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
@@ -46,6 +46,7 @@ import org.bukkit.event.server.BroadcastMessageEvent;
 import org.bukkit.event.weather.WeatherChangeEvent;
 import org.bukkit.event.world.StructureGrowEvent;
 import org.bukkit.event.world.WorldLoadEvent;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
 
@@ -59,6 +60,7 @@ public class MinecraftListener implements Listener {
 
     // Materials that can neither be placed or removed by the player
     Set<Material> fixedMaterials = new HashSet<>();
+    Set<String> unbannablePlayers = new HashSet<>();
 
     MinecraftListener(Client client, DefaultPlugin plugin) {
         super();
@@ -78,6 +80,10 @@ public class MinecraftListener implements Listener {
             }
         }
         logger.info("Fixed materials: {}", fixedMaterials.toString());
+
+        List<String> unbannablePlayersCased = plugin.config.getStringList("NotBannedPlayers");
+        unbannablePlayers =
+                unbannablePlayersCased.stream().map(String::toLowerCase).collect(Collectors.toSet());
 
         // remove all potentially existing player worlds
         File directory = Paths.get(".").toAbsolutePath().normalize().toFile();
@@ -106,7 +112,7 @@ public class MinecraftListener implements Listener {
      */
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
-	event.setJoinMessage(null);
+    event.setJoinMessage(null);
         new BukkitRunnable() {
             @Override
             public void run() {
@@ -150,12 +156,12 @@ public class MinecraftListener implements Listener {
         String playerName = player.getDisplayName();
 
         execLater(() -> {
-		// Paper MC is so fast that users have little time to read this
+                // Paper MC is so fast that users have little time to read this
                 // player.sendMessage("Welcome to the server, " + playerName);
                 player.sendMessage("We will teleport you to your own world shortly");
                 player.sendTitle("Welcome",
-                                 "to MC-Saar-Instruct!"
-                                 ,10, 80, 20
+                                 "to MC-Saar-Instruct!",
+                                 10, 80, 20
                                  );
             });
         String playerIp = "";
@@ -287,11 +293,14 @@ public class MinecraftListener implements Listener {
         logger.info("Active worlds {}", activeWorlds.toString());
         logger.info("worlds bukkit {}", Bukkit.getWorlds().toString());
 
-	event.setQuitMessage(null);
+        event.setQuitMessage(null);
         if (plugin.config.getBoolean("banPlayers")) {
             // Prevent player from doing the experiment again
-            List<String> unbannablePlayers = plugin.config.getStringList("NotBannedPlayers");
-            if (!unbannablePlayers.contains(player.getName())) {
+            // currently: don't consider case in player names for whitelist
+            // use exact case in ban list
+            // Minecraft usernames are case sensitive
+            String playerName = player.getName().toLowerCase();
+            if (!unbannablePlayers.contains(playerName)) {
                 BanList banList = Bukkit.getBanList(BanList.Type.NAME);
                 String banMessage = ChatColor.YELLOW + "You've already participated in this experiment";
                 banList.addBan(player.getName(), banMessage, null, "CommunicationPlugin");
