@@ -3,6 +3,8 @@
 ### Instructions
 - prerequisite: local experiment database (copy)
 - change database url, username and password in `src/main/resources/config.yml` 
+- change line `implementation files("/home/ca/Documents/Hiwi_Minecraft/spigot-plugin/communication/build/libs/communication-1.1-SNAPSHOT-all.jar")` 
+in build.gradle to a local version of the communication plugin jar
 - compile plugin with `./gradlew shadowJar`
 - copy jar in the plugin folder of a new Minecraft server (without other plugins)
 - start server
