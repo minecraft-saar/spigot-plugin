@@ -10,6 +10,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
+import org.bukkit.scheduler.BukkitTask;
 import org.jooq.DSLContext;
 import org.jooq.Result;
 import org.jooq.SQLDialect;
@@ -19,6 +20,7 @@ import de.saar.minecraft.broker.db.tables.records.GameLogsRecord;
 
 public class ReplayPlugin extends JavaPlugin{
     public ReplayListener listener;
+    BukkitTask currentReplay;
     private FileConfiguration config;
     private DSLContext jooq;
     private static Logger logger = LogManager.getLogger(ReplayPlugin.class);
@@ -34,7 +36,7 @@ public class ReplayPlugin extends JavaPlugin{
         this.getCommand("select").setExecutor(command);
         // TODO: add stop replay and/or pause replay command
 
-        listener = new ReplayListener();
+        listener = new ReplayListener(this);
         getServer().getPluginManager().registerEvents(listener, this);
 
         // Get database connection

@@ -24,10 +24,12 @@ import java.io.File;
 import java.io.IOException;
 
 public class ReplayListener implements Listener {
-    static Logger logger = LogManager.getLogger(ReplayListener.class);
-    boolean movementLocked = false;
+    private static Logger logger = LogManager.getLogger(ReplayListener.class);
+    private boolean movementLocked = false;
+    private ReplayPlugin plugin;
 
-    ReplayListener() {
+    ReplayListener(ReplayPlugin plugin) {
+        this.plugin = plugin;
         World world = Bukkit.getWorld("world");
         world.setThundering(false);
         world.setSpawnFlags(false, false);
@@ -44,12 +46,13 @@ public class ReplayListener implements Listener {
 
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
-        // start replay
+        event.getPlayer().sendMessage("Start a replay with '/select <gameid>'");
     }
 
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent event) {
         deleteReplayWorld();
+        this.plugin.currentReplay.cancel();
     }
 
     public void deleteReplayWorld() {

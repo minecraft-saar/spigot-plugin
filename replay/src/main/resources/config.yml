@@ -1,3 +1,6 @@
 url: "jdbc:mysql://localhost:3306/?autoReconnect=true"
 user: "minecraft"
 password: ""
+
+updateFrequency: 5
+speed: 1.0

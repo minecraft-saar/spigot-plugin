@@ -29,16 +29,24 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import static java.time.temporal.ChronoUnit.MILLIS;
 
 public class SelectGameCommand implements CommandExecutor {
     private final ReplayPlugin plugin;
     private static final Logger logger = LogManager.getLogger(SelectGameCommand.class);
-    private BukkitRunnable current;
+    private LocalDateTime replayStartTime;
+    private LocalDateTime gameStartTime;
+    private LocalDateTime currentGameTime;
+    private final int updateFrequency;
+    private final double speed;
 
     public SelectGameCommand(ReplayPlugin plugin) {
         this.plugin = plugin;
+        this.updateFrequency = plugin.getConfig().getInt("updateFrequency");
+        this.speed = plugin.getConfig().getDouble("speed");
     }
 
     @Override
@@ -49,12 +57,9 @@ public class SelectGameCommand implements CommandExecutor {
         }
         Player player = (Player) sender;
         // stop old replays
-        if (current != null) {
-            current.cancel();
-            logger.info("is cancelled {}", current.isCancelled());
-            int taskid = current.getTaskId();
-            Bukkit.getServer().getScheduler().cancelTask(taskid);
-            logger.info("is cancelled {}", current.isCancelled());
+        if (plugin.currentReplay != null) {
+            Bukkit.getServer().getScheduler().cancelTask(plugin.currentReplay.getTaskId());
+            logger.info("task is cancelled {}", plugin.currentReplay.isCancelled());
         }
 
         int gameId = Integer.parseInt(args[0]);
@@ -65,21 +70,24 @@ public class SelectGameCommand implements CommandExecutor {
             return false;
         }
         prepareReplay(game, player);
-
-        current = new BukkitRunnable() {
+        replayStartTime = LocalDateTime.now();
+        gameStartTime = gameLog.get(0).getTimestamp();
+        currentGameTime = gameStartTime;
+        BukkitRunnable current = new BukkitRunnable() {
             @Override
             public void run() {
-                startReplay(gameLog, player);
+                runReplayRound(gameLog, player);
             }
         };
-        current.runTaskAsynchronously(plugin);
+        plugin.currentReplay = current.runTaskTimer(plugin, 0, updateFrequency);
         return true;
     }
 
     public void prepareReplay(GamesRecord game, Player player) {
         player.teleport(Bukkit.getWorld("world").getSpawnLocation());
         plugin.listener.deleteReplayWorld();
-        // Prepare a new world
+
+        // Prepare a new world  TODO: copy a base replay world?
         String worldName = "replay_world";
         WorldCreator creator = new WorldCreator(worldName);
         FlatChunkGenerator chunkGenerator = new FlatChunkGenerator();
@@ -112,112 +120,126 @@ public class SelectGameCommand implements CommandExecutor {
         plugin.listener.setMovementLocked(true);
     }
 
-    private void execLater(Runnable task) {
-        var scheduler = plugin.getServer().getScheduler();
-        scheduler.scheduleSyncDelayedTask(plugin, task, 0);
-    }
+    /**
+     * Runs one iteration of the game replay
+     * @param gameLog all gameLogsRecords for one game
+     * @param player the player watching the replay
+     */
+    public void runReplayRound(Result<GameLogsRecord> gameLog, Player player) {
+        LocalDateTime newGameTime =
+                gameStartTime.plus((long) (replayStartTime.until(LocalDateTime.now(),
+                        MILLIS) * speed), MILLIS);
 
-    public void startReplay(Result<GameLogsRecord> gameLog, Player player) {
-        LocalDateTime oldTimestamp = gameLog.get(0).getTimestamp();
-        for (GameLogsRecord record: gameLog) {
+        // Get all records between currentGameTime and newGameTime
+        List<GameLogsRecord> filtered = gameLog.stream()
+                .filter((x) -> x.getTimestamp().isAfter(currentGameTime)
+                        && x.getTimestamp().isBefore(newGameTime))
+                .collect(Collectors.toList());
+        logger.info("filtered {}", filtered.size());
+        currentGameTime = newGameTime;
+
+        // replay set of records in Minecraft
+        for (GameLogsRecord record: filtered) {
             String type = record.getMessageType();
             String message = record.getMessage();
-            LocalDateTime timestamp = record.getTimestamp();
             GameLogsDirection direction = record.getDirection();
 
-            // TODO: switch between mode automatic and only next message on click
-            if (type.equals("StatusMessage")) {
-                // wait for the timestamp difference TODO: check difference
-                long difference = oldTimestamp.until(timestamp, MILLIS);
-                oldTimestamp = timestamp;
-//                difference = Long.max(difference - 20, 0);  // Each tick has 20 ms
-                difference = Long.max(difference, 0);  // Each tick has 20 ms
-                try {
-                    Thread.sleep(difference);
-                } catch (InterruptedException e) {
-                    logger.error(e.getMessage());
+            World world = player.getWorld();
+            switch (type) {
+                case "ERROR":
+                case "LOG": {
+                    player.sendMessage(ChatColor.AQUA + message);
+                    if (message.contains("Finished")) {
+                        plugin.listener.setMovementLocked(false);
+                        Bukkit.getScheduler().cancelTask(plugin.currentReplay.getTaskId());
+                    }
+                    break;
+                }
+                case "StatusMessage": {
+                    // TODO: stop being teleported into existing blocks
+                    int[] coords = getCoordinates(message);
+                    float[] dirs = getDirections(message);
+                    Location nextLocation = new Location(world, coords[0], coords[1], coords[2]);
+                    nextLocation.setDirection(new Vector(dirs[0], dirs[1], dirs[2]));
+                    player.teleport(nextLocation);
+                    break;
+                }
+                case "BlockPlacedMessage": {
+                    int[] coords = getCoordinates(message);
+                    int materialType = Json.parse(message).asObject().get("type").asInt();
+                    Material material = Material.values()[materialType];
+                    world.getBlockAt(coords[0], coords[1], coords[2]).setType(material);
+                    break;
+                }
+                case "BlockDestroyedMessage": {
+                    int[] coords = getCoordinates(message);
+                    world.getBlockAt(coords[0], coords[1], coords[2]).setType(Material.AIR);
+                    break;
+                }
+                case "TextMessage": {
+                    JsonObject object = Json.parse(message).asObject();
+                    String text = object.get("text").asString();
+                    if (direction.equals(GameLogsDirection.PassToClient)) {
+                        player.sendMessage(ChatColor.WHITE + text);
+                    } else {
+                        player.sendMessage(ChatColor.YELLOW + text);
+                    }
+                    break;
+                }
+                // Ignore Architect logs
+                case "BlocksCurrentObjectLeft":
+                case "CurrentWorld":
+                case "CurrentObject":
+                case "NewOrientation":
+                case "InitialPlan":
+                case "GameId":
+                    break;
+                default: {
+                    logger.warn("Unidentified message {}", type);
                 }
             }
-
-            execLater(() -> {
-                World world = player.getWorld();
-                switch (type) {
-                    case "LOG": {
-                        player.sendMessage(ChatColor.AQUA + message);
-                        break;
-                    }
-                    case "StatusMessage": {
-                        // TODO: stop being teleported into existing blocks
-                        JsonObject object = Json.parse(message).asObject();
-                        int x;
-                        if (object.get("x") != null) {
-                            x = object.get("x").asInt();
-                        } else {
-                            x = 0;
-                        }
-                        int y = object.get("y").asInt();
-                        int z = object.get("z").asInt();
-                        float xDirection;
-                        if (object.get("xDirection") != null) {
-                            xDirection = object.get("xDirection").asFloat();
-                        } else {
-                            xDirection = 0;
-                        }
-                        float yDirection;
-                        if (object.get("yDirection") != null) {
-                            yDirection = object.get("yDirection").asFloat();
-                        } else {
-                            // In the beginning after game is created, some yDirection values are missing
-                            yDirection = 0;
-                        }
-                        float zDirection = object.get("zDirection").asFloat();
-                        Location nextLocation = new Location(world, x, y, z);
-                        nextLocation.setDirection(new Vector(xDirection, yDirection, zDirection));
-                        player.teleport(nextLocation);
-                        break;
-                    }
-                    case "BlockPlacedMessage": {
-                        JsonObject object = Json.parse(message).asObject();
-                        int x = object.get("x").asInt();
-                        int y = object.get("y").asInt();
-                        int z = object.get("z").asInt();
-                        Material material = Material.values()[object.get("type").asInt()];
-                        world.getBlockAt(x, y, z).setType(material);
-                        break;
-                    }
-                    case "BlockDestroyedMessage": {
-                        JsonObject object = Json.parse(message).asObject();
-                        int x = object.get("x").asInt();
-                        int y = object.get("y").asInt();
-                        int z = object.get("z").asInt();
-                        world.getBlockAt(x, y, z).setType(Material.AIR);
-                        break;
-                    }
-                    case "TextMessage": {
-                        // TODO: distinguish between direction
-                        JsonObject object = Json.parse(message).asObject();
-                        String text = object.get("text").asString();
-                        if (direction.equals(GameLogsDirection.PassToClient)) {
-                            player.sendMessage(ChatColor.WHITE + text);
-                        } else {
-                            player.sendMessage(ChatColor.YELLOW + text);
-                        }
-                        break;
-                    }
-                    // Ignore Architect logs
-                    case "BlocksCurrentObjectLeft":
-                    case "CurrentWorld":
-                    case "CurrentObject":
-                    case "NewOrientation":
-                    case "InitialPlan":
-                    case "GameId":
-                        break;
-                    default: {
-                        logger.warn("Unidentified message {}", type);
-                    }
-                }
-            });
         }
-        plugin.listener.setMovementLocked(false);
+    }
+
+    private int[] getCoordinates(String message) {
+        JsonObject object = Json.parse(message).asObject();
+        int x, y, z;
+        if (object.get("x") != null) {
+            x = object.get("x").asInt();
+        } else {
+            x = 0;
+        }
+        if (object.get("y") != null) {
+            y = object.get("y").asInt();
+        } else {
+            y = 0;
+        }
+        if (object.get("z") != null) {
+            z = object.get("z").asInt();
+        } else {
+            z = 0;
+        }
+        return new int[]{x,y,z};
+    }
+
+    private float[] getDirections(String message) {
+        JsonObject object = Json.parse(message).asObject();
+        float x, y, z;
+        if (object.get("xDirection") != null) {
+            x = object.get("xDirection").asFloat();
+        } else {
+            x = 0;
+        }
+        if (object.get("yDirection") != null) {
+            y = object.get("yDirection").asFloat();
+        } else {
+            y = 0;
+        }
+        if (object.get("zDirection") != null) {
+            z = object.get("zDirection").asFloat();
+        } else {
+            z = 0;
+        }
+        return new float[]{x,y,z};
     }
 }
