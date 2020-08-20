@@ -2,6 +2,7 @@ package de.saar.minecraft.replay;
 
 import com.eclipsesource.json.Json;
 import com.eclipsesource.json.JsonObject;
+import com.github.agomezmoron.multimedia.recorder.VideoRecorder;
 import de.saar.minecraft.broker.db.GameLogsDirection;
 import de.saar.minecraft.broker.db.tables.records.GameLogsRecord;
 import de.saar.minecraft.broker.db.tables.records.GamesRecord;
@@ -27,6 +28,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.MalformedURLException;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -35,7 +37,7 @@ import java.util.stream.Collectors;
 import static java.time.temporal.ChronoUnit.MILLIS;
 
 public class SelectGameCommand implements CommandExecutor {
-    private final ReplayPlugin plugin;
+    final ReplayPlugin plugin;
     private static final Logger logger = LogManager.getLogger(SelectGameCommand.class);
     private LocalDateTime replayStartTime;
     private LocalDateTime gameStartTime;
@@ -61,12 +63,19 @@ public class SelectGameCommand implements CommandExecutor {
             Bukkit.getServer().getScheduler().cancelTask(plugin.currentReplay.getTaskId());
             logger.info("task is cancelled {}", plugin.currentReplay.isCancelled());
         }
-
+        if (args.length < 1) {
+            sender.sendMessage("Missing game id");
+            return false;
+        }
         int gameId = Integer.parseInt(args[0]);
+        return runCommand(gameId, player);
+    }
+
+    public boolean runCommand(int gameId, Player player) {
         GamesRecord game = plugin.getGame(gameId);
         Result<GameLogsRecord> gameLog = plugin.getGameLog(gameId);
         if ((gameLog == null) || (game == null)) {
-            sender.sendMessage(String.format("Game with id %d is not in database", gameId));
+            player.sendMessage(String.format("Game with id %d is not in database", gameId));
             return false;
         }
         prepareReplay(game, player);
@@ -135,7 +144,6 @@ public class SelectGameCommand implements CommandExecutor {
                 .filter((x) -> x.getTimestamp().isAfter(currentGameTime)
                         && x.getTimestamp().isBefore(newGameTime))
                 .collect(Collectors.toList());
-        logger.info("filtered {}", filtered.size());
         currentGameTime = newGameTime;
 
         // replay set of records in Minecraft
@@ -152,7 +160,15 @@ public class SelectGameCommand implements CommandExecutor {
                     if (message.contains("Finished")) {
                         plugin.listener.setMovementLocked(false);
                         Bukkit.getScheduler().cancelTask(plugin.currentReplay.getTaskId());
+                        plugin.currentReplay = null;
+                        try {
+                            String videoPath = VideoRecorder.stop();
+                            player.sendMessage("Finished recording: " + videoPath);
+                        } catch (MalformedURLException e) {
+                            logger.error(e.getMessage());
+                        }
                     }
+                    // TODO: also check for player logging out (e.g. game 45)
                     break;
                 }
                 case "StatusMessage": {

@@ -1,5 +1,6 @@
 package de.saar.minecraft.replay;
 
+import com.github.agomezmoron.multimedia.recorder.VideoRecorder;
 import de.saar.minecraft.communication.FlatChunkGenerator;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
@@ -22,6 +23,7 @@ import org.bukkit.event.world.WorldLoadEvent;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
 
 public class ReplayListener implements Listener {
     private static Logger logger = LogManager.getLogger(ReplayListener.class);
@@ -47,10 +49,18 @@ public class ReplayListener implements Listener {
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
         event.getPlayer().sendMessage("Start a replay with '/select <gameid>'");
+        event.getPlayer().sendMessage("Start a replay and record it with '/record <gameid>'");
+        event.getPlayer().sendMessage("Stop a recording with '/stoprecording'");
     }
 
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent event) {
+        try {
+            String videoPath = VideoRecorder.stop();
+            event.getPlayer().sendMessage("Finished recording: " + videoPath);
+        } catch (MalformedURLException e) {
+            logger.error(e.getMessage());
+        }
         deleteReplayWorld();
         this.plugin.currentReplay.cancel();
     }

@@ -7,3 +7,9 @@ commands:
   select:
     description: Select a game to replay.
     usage: /select [game id]
+  record:
+    description: Record a game during replay
+    usage: /record [game id]
+  stopRecording:
+    description: Stop a recording
+    usage: /stopRecording

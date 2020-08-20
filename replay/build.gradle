@@ -20,6 +20,10 @@ repositories {
             password = project.findProperty("gpr.key") ?: System.getenv("GPR_API_KEY")
         }
     }
+    maven {
+        name = "Java screen recorder library by agomezmoron"
+        url = uri("https://raw.github.com/agomezmoron/screen-recorder/mvn-repo")
+    }
 }
 
 dependencies {
@@ -42,5 +46,8 @@ dependencies {
     implementation group: "org.jooq", name: "jooq", version: "3.13.0"
     implementation group: "mysql", name: "mysql-connector-java", version: "5.1.6"
     implementation group: "org.mariadb.jdbc", name: "mariadb-java-client", version: "2.6.0"
+
+    // Screen recording
+    compile 'com.github.agomezmoron:screen-recorder:0.0.3'
 
 }

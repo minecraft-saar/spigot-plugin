@@ -4,3 +4,7 @@ password: ""
 
 updateFrequency: 5
 speed: 1.0
+
+videoPath: "./recordings/"
+# in milliseconds: screen recorder recommends 50
+captureInterval: 50

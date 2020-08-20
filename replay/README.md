@@ -8,7 +8,7 @@ in build.gradle to a local version of the communication plugin jar
 - compile plugin with `./gradlew shadowJar`
 - copy jar in the plugin folder of a new Minecraft server (without other plugins)
 - start server
-- open a text message with `t` and type `\select <gameid>`. 
+- open a text message with `t` and type `/select <gameid>`. 
 - wait until you are teleported into a new world and watch the game
 - text messages from the system are white, messages from the player are yellow, 
 system logs are aqua. Logs of the types `BlocksCurrentObjectLeft`, 
@@ -16,6 +16,9 @@ system logs are aqua. Logs of the types `BlocksCurrentObjectLeft`,
 `GameId` are currently not printed.
 - WARNING: if you select a new game before the previous replay is finished, 
 the plugin tries to jump between both which leads to a strobe light effect. 
+- record a game on video with `/record <gameid>`. It will record the entire screen, 
+not just the Minecraft window, and save it as a `.mov`-file
+- stop a currently running recording with `/stoprecording`.
 
 ### Configuration
 - url: database with Minecraft game logs
@@ -23,6 +26,8 @@ the plugin tries to jump between both which leads to a strobe light effect.
 - password: password for the database
 - updateFrequency: default 5, number of ticks between updates
 - speed: default 1.0, normal speed (< 1 slower, > 1 faster)
+- videoPath: where recorded replays should be stored
+- captureInterval: in milliseconds, screen recorder recommends 50
 
 ### Intended behaviour
 - select game from the database
@@ -32,6 +37,5 @@ the plugin tries to jump between both which leads to a strobe light effect.
 - stop replay
 
 ### TODOs
-- add explanation in start world
 - stop being teleported into blocks
 - maybe make replay smoother

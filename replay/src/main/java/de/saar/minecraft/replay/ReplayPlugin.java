@@ -1,11 +1,13 @@
 package de.saar.minecraft.replay;
 
+import com.github.agomezmoron.multimedia.recorder.configuration.VideoRecorderConfiguration;
 import de.saar.minecraft.broker.db.tables.records.GamesRecord;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.io.File;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -31,10 +33,18 @@ public class ReplayPlugin extends JavaPlugin{
         this.reloadConfig();
         config = getConfig();
 
+        File videoPath = new File(config.getString("videoPath"));
+        VideoRecorderConfiguration.setVideoDirectory(videoPath);
+        VideoRecorderConfiguration.setCaptureInterval(config.getInt("captureInterval"));
+
         SelectGameCommand command = new SelectGameCommand(this);
         logger.info("command {}", command);
         this.getCommand("select").setExecutor(command);
-        // TODO: add stop replay and/or pause replay command
+
+        RecordCommand recordCommand = new RecordCommand(command);
+        this.getCommand("record").setExecutor(recordCommand);
+
+        this.getCommand("stopRecording").setExecutor(new StopRecordingCommand(this));
 
         listener = new ReplayListener(this);
         getServer().getPluginManager().registerEvents(listener, this);
