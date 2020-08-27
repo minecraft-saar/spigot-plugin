@@ -7,10 +7,10 @@ import org.apache.logging.log4j.Logger;
 
 
 public class DummyMinecraftClient implements Client {
-    private static Logger logger = LogManager.getLogger(MinecraftClient.class);
+    private static final Logger logger = LogManager.getLogger(MinecraftClient.class);
     private BidiMap<String, Integer> activeGames;
     private int dummyGameId;
-    private WorldTestPlugin plugin;
+    private final WorldTestPlugin plugin;
 
     public DummyMinecraftClient(WorldTestPlugin plugin) {
         activeGames = new DualHashBidiMap<>();

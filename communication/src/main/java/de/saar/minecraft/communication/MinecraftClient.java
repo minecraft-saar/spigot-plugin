@@ -12,12 +12,10 @@ import de.saar.minecraft.shared.StatusMessage;
 import de.saar.minecraft.shared.TextMessage;
 import de.saar.minecraft.shared.WorldFileError;
 import de.saar.minecraft.shared.WorldSelectMessage;
-
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.StatusRuntimeException;
 import io.grpc.stub.StreamObserver;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -29,20 +27,17 @@ import org.apache.logging.log4j.Logger;
 
 public class MinecraftClient implements Client {
 
-    private static NoneObserver noneObserver = new NoneObserver();
+    private static final NoneObserver noneObserver = new NoneObserver();
     private final ManagedChannel channel;
-    private BrokerGrpc.BrokerBlockingStub blockingStub;
-    private BrokerGrpc.BrokerStub nonblockingStub;
+    private final BrokerGrpc.BrokerBlockingStub blockingStub;
+    private final BrokerGrpc.BrokerStub nonblockingStub;
 
-    private static Logger logger = LogManager.getLogger(MinecraftClient.class);
+    private static final Logger logger = LogManager.getLogger(MinecraftClient.class);
 
     private BidiMap<String, Integer> activeGames;
 
     // Games in which the player is already in their own world
     private Set<Integer> readyGames = new HashSet<>();
-
-    private HashMap<Integer, TextStreamObserver> observers = new HashMap<>();
-
     private static CommunicationPlugin plugin;
 
     /**
@@ -50,8 +45,6 @@ public class MinecraftClient implements Client {
      */
     public MinecraftClient(String host, int port, CommunicationPlugin plugin) {
         this(ManagedChannelBuilder.forAddress(host, port).usePlaintext().build());
-        // TODO: .build() here or change signature of next method to public
-        //  RouteGuideClient(ManagedChannelBuilder<?> channelBuilder)
         activeGames = new DualHashBidiMap<>();
         MinecraftClient.plugin = plugin;
     }
@@ -99,7 +92,6 @@ public class MinecraftClient implements Client {
         System.err.println("!!!!! obtained message channel");
         activeGames.put(playerName, gameId);
         logger.info("obtained message channel");
-        observers.put(gameId, new TextStreamObserver(gameId));
         return worldSelect.getName();
     }
 
@@ -150,7 +142,7 @@ public class MinecraftClient implements Client {
         }
     }
 
-      public static class NoneObserver implements StreamObserver<None> {
+    public static class NoneObserver implements StreamObserver<None> {
         @Override
         public void onNext(None value) {
         }
@@ -165,9 +157,8 @@ public class MinecraftClient implements Client {
         }
     }
 
-  
     private class TextStreamObserver implements StreamObserver<TextMessage> {
-        private int gameId;
+        private final int gameId;
 
         public TextStreamObserver(int gameId) {
             this.gameId = gameId;
@@ -287,7 +278,7 @@ public class MinecraftClient implements Client {
     }
 
     /**
-     * Sends a TextMessage to the broker
+     * Sends a TextMessage to the broker.
      */
     public void sendTextMessage(int gameId, String message) {
         if (!readyGames.contains(gameId)) {

@@ -10,6 +10,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.generator.ChunkGenerator;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.util.Vector;
+import org.jetbrains.annotations.NotNull;
 
 public class DefaultPlugin extends JavaPlugin {
     Client client;
@@ -65,6 +66,10 @@ public class DefaultPlugin extends JavaPlugin {
         }
     }
 
+    /**
+     * Will kick a player from the server in ca. 10 minutes.
+     * @param playerName the username of the player
+     */
     public void delayedKickPlayer(String playerName) {
         getServer().getScheduler().scheduleSyncDelayedTask(this, new Runnable() {
             @Override
@@ -79,7 +84,7 @@ public class DefaultPlugin extends JavaPlugin {
     }
 
     @Override
-    public ChunkGenerator getDefaultWorldGenerator(String worldName, String id) {
+    public ChunkGenerator getDefaultWorldGenerator(@NotNull String worldName, String id) {
         return new FlatChunkGenerator();
     }
 

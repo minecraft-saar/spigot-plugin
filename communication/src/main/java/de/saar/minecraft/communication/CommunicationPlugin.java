@@ -13,7 +13,7 @@ public class CommunicationPlugin extends DefaultPlugin {
     public void onEnable() {
         super.onEnable();
         // Get config values
-        long updateFrequency = config.getLong("updateFrequency", 4L);
+        final long updateFrequency = config.getLong("updateFrequency", 4L);
         int clientPort = config.getInt("clientPort", 2802);
 
         client = new MinecraftClient("localhost", clientPort, this);

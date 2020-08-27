@@ -16,7 +16,6 @@ import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
-
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -51,8 +50,8 @@ import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
 
 public class MinecraftListener implements Listener {
-    private static Logger logger = LogManager.getLogger(MinecraftListener.class);
-    private DefaultPlugin plugin;
+    private static final Logger logger = LogManager.getLogger(MinecraftListener.class);
+    private final DefaultPlugin plugin;
     Client client;
     WorldCreator creator;
     HashMap<String, World> activeWorlds = new HashMap<>();
@@ -60,7 +59,7 @@ public class MinecraftListener implements Listener {
 
     // Materials that can neither be placed or removed by the player
     Set<Material> fixedMaterials = new HashSet<>();
-    Set<String> unbannablePlayers = new HashSet<>();
+    Set<String> unbannablePlayers;
 
     MinecraftListener(Client client, DefaultPlugin plugin) {
         super();
@@ -71,7 +70,7 @@ public class MinecraftListener implements Listener {
         this.plugin = plugin;
 
         List<String> materialList = plugin.config.getStringList("fixedMaterials");
-        for (String name: materialList) {
+        for (String name : materialList) {
             Material newMaterial = Material.getMaterial(name);
             if (newMaterial == null) {
                 logger.warn("{} is not a Material and can't be added to fixedMaterials", name);
@@ -82,8 +81,9 @@ public class MinecraftListener implements Listener {
         logger.info("Fixed materials: {}", fixedMaterials.toString());
 
         List<String> unbannablePlayersCased = plugin.config.getStringList("NotBannedPlayers");
-        unbannablePlayers =
-                unbannablePlayersCased.stream().map(String::toLowerCase).collect(Collectors.toSet());
+        unbannablePlayers = unbannablePlayersCased.stream()
+                .map(String::toLowerCase)
+                .collect(Collectors.toSet());
 
         // remove all potentially existing player worlds
         File directory = Paths.get(".").toAbsolutePath().normalize().toFile();
@@ -101,7 +101,7 @@ public class MinecraftListener implements Listener {
         World baseWorld = Bukkit.getWorld("world");
         prepareWorld(baseWorld);
         baseWorld.getWorldBorder().setSize(100);
-        baseWorld.setSpawnLocation(0, 2,0);
+        baseWorld.setSpawnLocation(0, 2, 0);
         Bukkit.clearRecipes();
     }
 
@@ -112,7 +112,7 @@ public class MinecraftListener implements Listener {
      */
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
-    event.setJoinMessage(null);
+        event.setJoinMessage(null);
         new BukkitRunnable() {
             @Override
             public void run() {
@@ -156,14 +156,14 @@ public class MinecraftListener implements Listener {
         String playerName = player.getDisplayName();
 
         execLater(() -> {
-                // Paper MC is so fast that users have little time to read this
-                // player.sendMessage("Welcome to the server, " + playerName);
-                player.sendMessage("We will teleport you to your own world shortly");
-                player.sendTitle("Welcome",
-                                 "to MC-Saar-Instruct!",
-                                 10, 80, 20
-                                 );
-            });
+            // Paper MC is so fast that users have little time to read this
+            // player.sendMessage("Welcome to the server, " + playerName);
+            player.sendMessage("We will teleport you to your own world shortly");
+            player.sendTitle("Welcome",
+                    "to MC-Saar-Instruct!",
+                    10, 80, 20
+            );
+        });
         String playerIp = "";
         InetSocketAddress address = player.getAddress();
         if (address != null) {
@@ -185,18 +185,17 @@ public class MinecraftListener implements Listener {
         String filename = Paths.get(path, structureFile + ".csv").toString();
         InputStream in = MinecraftListener.class.getResourceAsStream(filename);
         World world;
+        FlatChunkGenerator generator = new FlatChunkGenerator();
         try {
             world = plugin.getServer().getScheduler().callSyncMethod(plugin, () -> {
                 // pre-populate the next world for the next player
                 String worldName = "playerworld_" + ++worldCounter;
                 creator = new WorldCreator(worldName);
-                creator.generator(new FlatChunkGenerator());
+                creator.generator(generator);
                 creator.generateStructures(false);
                 return creator.createWorld();
             }).get();
-        } catch (InterruptedException e) {
-            throw new RuntimeException("World creation interrupted");
-        } catch (ExecutionException e) {
+        } catch (InterruptedException | ExecutionException e) {
             throw new RuntimeException("World creation interrupted");
         }
 
@@ -205,7 +204,7 @@ public class MinecraftListener implements Listener {
             execSync(() -> {
                 // First, populate the world
                 try {
-                    loadPrebuiltStructure(reader, world);
+                    generator.loadPrebuiltStructure(reader, world);
                     logger.info("Loaded structure: {}", filename);
                 } catch (IOException e) {
                     logger.error("World file could not be loaded: {} {}", filename, e);
@@ -221,42 +220,44 @@ public class MinecraftListener implements Listener {
             execSync(() -> player.sendMessage("World file could not be found"));
         }
         execSync(() -> {
-                Location teleportLocation = world.getSpawnLocation();
-                teleportLocation.setDirection(new Vector(-70,0,-70));
-                boolean worked = player.teleport(teleportLocation);
-                if (!worked) {
-                    logger.error("Teleportation failed");
-                    client.sendMinecraftServerError(
-                                                    gameId,
-                                                    String.format("Player is in wrong world: %s instead of %s",
-                                                                  player.getWorld().getName(), world.getName()));
-                    player.sendMessage("Teleportation failed");
-                }
-                logger.info("Now in world {}", player.getWorld().getName());
-                logger.debug("Now at block type: {}", teleportLocation.getBlock().getType());
-            });
+            Location teleportLocation = world.getSpawnLocation();
+            teleportLocation.setDirection(new Vector(-70, 0, -70));
+            boolean worked = player.teleport(teleportLocation);
+            if (!worked) {
+                logger.error("Teleportation failed");
+                client.sendMinecraftServerError(
+                        gameId,
+                        String.format("Player is in wrong world: %s instead of %s",
+                                player.getWorld().getName(), world.getName()));
+                player.sendMessage("Teleportation failed");
+            }
+            logger.info("Now in world {}", player.getWorld().getName());
+            logger.debug("Now at block type: {}", teleportLocation.getBlock().getType());
+        });
         execLater(() -> {
-                // Add world to active worlds
-                activeWorlds.put(world.getName(), world);
-                player.setGameMode(GameMode.CREATIVE);
-                // put a stone into the player's hand
-                var inventory = player.getInventory();
-                inventory.clear();
-                var itemNames = plugin.config.getStringList("startInventory");
-                for (String name: itemNames) {
-                    Material material = Material.getMaterial(name);
-                    if (material == null) {
-                        logger.error("{} is not a valid material and can't be added to the inventory", name);
-                    } else {
-                        inventory.addItem(new ItemStack(material));
-                    }
+            // Add world to active worlds
+            activeWorlds.put(world.getName(), world);
+            player.setGameMode(GameMode.CREATIVE);
+            // put a stone into the player's hand
+            var inventory = player.getInventory();
+            inventory.clear();
+            var itemNames = plugin.config.getStringList("startInventory");
+            for (String name : itemNames) {
+                Material material = Material.getMaterial(name);
+                if (material == null) {
+                    logger.error("{} is not a valid material and can't be added to the "
+                            + "inventory", name);
+                } else {
+                    inventory.addItem(new ItemStack(material));
                 }
-            });
+            }
+        });
         client.playerReady(gameId);
     }
 
     /**
      * Sets all world settings to peaceful.
+     *
      * @param world a Minecraft World for a player
      */
     private void prepareWorld(World world) {
@@ -310,6 +311,7 @@ public class MinecraftListener implements Listener {
 
     /**
      * Delete a playerworld from both Minecraft and disk.
+     *
      * @param world a Minecraft World of a player
      * @return true if the passed world could be deleted completely
      */
@@ -325,7 +327,7 @@ public class MinecraftListener implements Listener {
             Location baseLocation = baseWorld.getSpawnLocation();
             // Teleport player away so the world can be unloaded now;
             // Alternative: only unload the world after the PlayerQuit Event is executed
-            for (Player player: world.getPlayers()) {
+            for (Player player : world.getPlayers()) {
                 player.teleport(baseLocation);
                 player.sendMessage("Your world was deleted. Please log out.");
             }
@@ -373,16 +375,16 @@ public class MinecraftListener implements Listener {
             return;
         }
         logger.info("Block was placed with type {} {}",
-            block.getType().name(),
-            block.getType().ordinal());
+                block.getType().name(),
+                block.getType().ordinal());
 
         int gameId = client.getGameIdForPlayer(player.getName());
         logger.debug("gameId {} coordinates {}-{}-{}",
-            gameId, block.getX(),
-            block.getY(),
-            block.getZ());
+                gameId, block.getX(),
+                block.getY(),
+                block.getZ());
         client.sendBlockPlaced(gameId, block.getX(), block.getY(), block.getZ(),
-            block.getType().ordinal());
+                block.getType().ordinal());
     }
 
     /**
@@ -404,11 +406,11 @@ public class MinecraftListener implements Listener {
             return;
         }
         logger.info("Block was destroyed with type {} {}",
-            block.getType().name(), block.getType().ordinal());
-        
+                block.getType().name(), block.getType().ordinal());
+
         int gameId = client.getGameIdForPlayer(player.getName());
         client.sendBlockDestroyed(
-            gameId, block.getX(), block.getY(), block.getZ(), block.getType().ordinal());
+                gameId, block.getX(), block.getY(), block.getZ(), block.getType().ordinal());
     }
 
     // TODO: what if block is not broken but just damaged?
@@ -464,39 +466,4 @@ public class MinecraftListener implements Listener {
         event.setCancelled(true);
     }
 
-    /**
-     * Reads blocks from a file and creates them in the given world.
-     * @param reader BufferedReader for a csv-file of the line structure: x,y,z,block type name
-     * @param world the world where the structure should be built
-     * @throws IOException if the structure file is missing or contains formatting errors
-     */
-    private void loadPrebuiltStructure(BufferedReader reader, World world) throws IOException {
-        try (reader) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                // skip comments
-                if (line.startsWith("#")) {
-                    continue;
-                }
-                // use comma as separator
-                String[] blockInfo = line.split(",");
-                int x = Integer.parseInt(blockInfo[0]);
-                int y = Integer.parseInt(blockInfo[1]);
-                int z = Integer.parseInt(blockInfo[2]);
-                String typeName = blockInfo[3];
-
-                Location location = new Location(world, x, y, z);
-                Material newMaterial = Material.getMaterial(typeName);
-                if (newMaterial == null) {
-                    throw new IOException(typeName + " is not a valid Material.");
-                } else {
-                    location.getBlock().setType(newMaterial);
-                }
-            }
-
-        } catch (IOException e) {
-            logger.error(e.getMessage());
-            throw e;
-        }
-    }
 }
