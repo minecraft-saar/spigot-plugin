@@ -28,4 +28,5 @@ build/
 
 # files the setup script generates
 /server/
+/replay_server/
 .setup_complete
