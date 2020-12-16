@@ -10,7 +10,7 @@ set -e
 set -u
 
 function setup_server {
-    wget https://papermc.io/api/v1/paper/1.15.2/350/download -O paper.jar
+    wget https://papermc.io/api/v1/paper/1.16.4/328/download -O paper.jar
     # this call will fail, but also sets up all the files
     echo "please ignore the Error and EULA warning below, this is part of the setup process"
     java -jar paper.jar
