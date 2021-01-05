@@ -23,13 +23,8 @@ public class FlatChunkGenerator extends ChunkGenerator {
                                                 int chunkX, int chunkZ, @NotNull BiomeGrid biome) {
         ChunkData chunk = createChunkData(world);
 
-        // Set ground blocks
-        for (int x = 0; x < 16; x++) {
-            for (int z = 0; z < 16; z++) {
-                chunk.setBlock(x, 65, z, Material.LIME_CONCRETE);
-                chunk.setBlock(x, 64, z, Material.BEDROCK);
-            }
-        }
+	chunk.setRegion(0,64,0,16,65,16, Material.BEDROCK);
+	chunk.setRegion(0,65,0,16,66,16, Material.LIME_CONCRETE);
         return chunk;
     }
 

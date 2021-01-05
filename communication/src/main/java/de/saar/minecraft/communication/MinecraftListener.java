@@ -201,7 +201,7 @@ public class MinecraftListener implements Listener {
 
         if (in != null) {
             BufferedReader reader = new BufferedReader(new InputStreamReader(in));
-            execSync(() -> {
+            execLater(() -> {
                 // First, populate the world
                 try {
                     generator.loadPrebuiltStructure(reader, world);
@@ -213,7 +213,7 @@ public class MinecraftListener implements Listener {
                     player.sendMessage("World file could not be loaded");
                 }
 
-            });
+		}, 2);
         } else {
             logger.error("World file could not be found: {}", filename);
             client.sendWorldFileError(gameId, "World file could not be found " + filename);

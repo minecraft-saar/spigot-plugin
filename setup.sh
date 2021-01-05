@@ -27,8 +27,11 @@ function setup_server {
 
 if [[ -f .setup_complete ]]; then
     echo "setup already completed"
+    echo "remove the .setup_complete file to force a new setup"
     exit
 fi
+
+rm -rf server replay_server
 
 mkdir -p server
 cd server
