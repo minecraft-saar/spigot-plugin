@@ -10,7 +10,7 @@ version '1.0-SNAPSHOT'
 repositories {
     mavenLocal()
     mavenCentral()
-
+    maven {url 'https://jitpack.io'}
     maven{url "https://hub.spigotmc.org/nexus/content/repositories/snapshots/"}
     maven {
         name = "GitHubPackages"
@@ -38,7 +38,7 @@ dependencies {
     // MC-Saar-Instruct
     implementation group: "com.google.protobuf", name: "protobuf-java", version: "3.9.0"
     implementation group: "io.grpc", name: "grpc-all", version: "1.23.0"
-    implementation group: "de.saar.minecraft", name: "shared-resources", version: "1.1.17"
+    compile 'com.github.minecraft-saar:shared-resources:1e4a6b413baccfc9a301308098139182624aed1f'
     implementation group: "de.saar.minecraft.infrastructure", name: "broker", version: "1.1.13"
     implementation group: "de.saar.minecraft.spigot-plugin", name:"communication", version:"1.1-SNAPSHOT"
 
