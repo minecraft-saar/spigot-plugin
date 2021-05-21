@@ -24,6 +24,7 @@ repositories {
         name = "Java screen recorder library by agomezmoron"
         url = uri("https://raw.github.com/agomezmoron/screen-recorder/mvn-repo")
     }
+    maven { url = 'https://oss.sonatype.org/content/repositories/snapshots' } 
 }
 
 dependencies {
