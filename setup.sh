@@ -9,8 +9,15 @@
 set -e
 set -u
 
+USE_DEV_SERVER=${USE_DEV_SERVER:-false}
+
 function setup_server {
-    wget https://papermc.io/api/v2/projects/paper/versions/1.16.5/builds/700/downloads/paper-1.16.5-700.jar -O paper.jar
+    if $USE_DEV_SERVER; then
+	../build_dev_paper.sh
+	cp Paper-Server/build/libs/Paper.*-mojang-mapped.jar paper.jar
+    else
+	wget https://papermc.io/api/v2/projects/paper/versions/1.16.5/builds/700/downloads/paper-1.16.5-700.jar -O paper.jar
+    fi
     # this call will fail, but also sets up all the files
     echo "please ignore the Error and EULA warning below, this is part of the setup process"
     java -jar paper.jar
