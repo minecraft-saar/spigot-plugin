@@ -6,10 +6,8 @@ set -e
 git clone git@github.com:PaperMC/Paper.git
 cd Paper
 git checkout dev/1.17
-./gradlew applyServerPatches
-./gradlew applyApiPatches
-./gradlew build
-./gradlew shadowJar
+./gradlew applyPatches
+./gradlew runShadow
 
 # now you can copy Paper-Server/build/libs/Paper.*-mojang-mapped.jar to wherever you want.
 # cp Paper-Server/build/libs/Paper.*-mojang-mapped.jar ........
