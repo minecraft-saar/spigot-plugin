@@ -44,6 +44,11 @@ public class WozArchitect extends AbstractArchitect {
     }
 
     @Override
+    protected void playerLeft() {
+        listener.player.sendMessage("The player left the game.");
+    }
+    
+    @Override
     public void handleStatusInformation(StatusMessage request) {
         int x = request.getX();
         int y = request.getY();

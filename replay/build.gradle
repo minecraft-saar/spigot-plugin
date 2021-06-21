@@ -1,6 +1,6 @@
 plugins {
     id 'java'
-    id "checkstyle"
+//    id "checkstyle"
     id "com.github.johnrengelman.shadow" version "5.2.0"
 }
 
@@ -28,7 +28,7 @@ repositories {
 }
 
 dependencies {
-    testCompile group: "junit", name: "junit", version: "4.12"
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.7.2'
     implementation group: "org.apache.logging.log4j", name: "log4j-core", version: "2.8.2"
     implementation group: "com.eclipsesource.minimal-json", name: "minimal-json", version: "0.9.4"
     implementation group: "commons-io", name: "commons-io", version: "2.5"
@@ -39,7 +39,7 @@ dependencies {
     // MC-Saar-Instruct
     implementation group: "com.google.protobuf", name: "protobuf-java", version: "3.9.0"
     implementation group: "io.grpc", name: "grpc-all", version: "1.23.0"
-    compile 'com.github.minecraft-saar:shared-resources:7a572320431c89293c09e05d288ae8aa618c044d'
+    implementation 'com.github.minecraft-saar:shared-resources:7a572320431c89293c09e05d288ae8aa618c044d'
     implementation group: "de.saar.minecraft.infrastructure", name: "broker", version: "1.1.13"
     implementation group: "de.saar.minecraft.spigot-plugin", name:"communication", version:"1.1-SNAPSHOT"
 
@@ -49,6 +49,6 @@ dependencies {
     implementation group: "org.mariadb.jdbc", name: "mariadb-java-client", version: "2.6.0"
 
     // Screen recording
-    compile 'com.github.agomezmoron:screen-recorder:0.0.3'
+    implementation 'com.github.agomezmoron:screen-recorder:0.0.3'
 
 }
