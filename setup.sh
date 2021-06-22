@@ -16,7 +16,7 @@ function setup_server {
 	../build_dev_paper.sh
 	cp Paper/Paper-Server/build/libs/Paper*-mojang-mapped.jar paper.jar
     else
-	wget https://papermc.io/api/v2/projects/paper/versions/1.16.5/builds/700/downloads/paper-1.16.5-700.jar -O paper.jar
+	wget https://papermc.io/api/v2/projects/paper/versions/1.17/builds/31/downloads/paper-1.17-31.jar -O paper.jar
     fi
     # this call will fail, but also sets up all the files
     echo "please ignore the Error and EULA warning below, this is part of the setup process"

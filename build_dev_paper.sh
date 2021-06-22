@@ -5,7 +5,7 @@
 set -e
 git clone git@github.com:PaperMC/Paper.git
 cd Paper
-git checkout dev/1.17
+git checkout master
 ./gradlew applyPatches
 ./gradlew runShadow
 
