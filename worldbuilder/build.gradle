@@ -7,7 +7,11 @@ plugins {
 group 'de.saar.minecraft'
 version '1.0-SNAPSHOT'
 
-sourceCompatibility = 1.11
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(16)
+    }
+}
 
 repositories {
     mavenCentral()
