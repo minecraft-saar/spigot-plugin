@@ -4,6 +4,9 @@ version: 1.0.0
 description: Replays experiments from the database
 api-version: 1.15
 commands:
+  connect:
+    description: connects to the specified database
+    usage: /connect [db]
   select:
     description: Select a game to replay.
     usage: /select [game id]

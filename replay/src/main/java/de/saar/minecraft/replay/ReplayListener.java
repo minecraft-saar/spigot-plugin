@@ -48,6 +48,7 @@ public class ReplayListener implements Listener {
 
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
+        event.getPlayer().sendMessage("Set the database with  '/connect <db>'");
         event.getPlayer().sendMessage("Start a replay with '/select <gameid>'");
         event.getPlayer().sendMessage("Start a replay and record it with '/record <gameid>'");
         event.getPlayer().sendMessage("Stop a recording with '/stoprecording'");
