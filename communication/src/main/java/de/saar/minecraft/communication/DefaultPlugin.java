@@ -1,10 +1,13 @@
 package de.saar.minecraft.communication;
 
 import java.util.List;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.World;
+import org.bukkit.block.Block;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.generator.ChunkGenerator;
@@ -32,7 +35,7 @@ public class DefaultPlugin extends JavaPlugin {
      */
     public void getAllPlayerPositions() {
         logger.debug(client.getActiveGames().toString());
-        for (Player player: getServer().getOnlinePlayers()) {
+        for (Player player : getServer().getOnlinePlayers()) {
             String playerName = player.getName();
             int gameId = client.getGameIdForPlayer(playerName);
             // skip players that are not in a game (yet)
@@ -40,9 +43,9 @@ public class DefaultPlugin extends JavaPlugin {
                 continue;
             }
             Location playerLocation = player.getLocation();
-            int xPos = (int)Math.round(playerLocation.getX());
-            int yPos = (int)Math.round(playerLocation.getY());
-            int zPos = (int)Math.round(playerLocation.getZ());
+            int xPos = (int) Math.round(playerLocation.getX());
+            int yPos = (int) Math.round(playerLocation.getY());
+            int zPos = (int) Math.round(playerLocation.getZ());
             Vector direction = player.getEyeLocation().getDirection();
             double xDir = direction.getX();
             double yDir = direction.getY();
@@ -53,8 +56,9 @@ public class DefaultPlugin extends JavaPlugin {
 
     /**
      * Displays a given message to a player.
+     *
      * @param playerName the name of the player that should receive the message
-     * @param message a string message
+     * @param message    a string message
      */
     public void sendTextMessage(String playerName, String message) {
         Player player = getServer().getPlayer(playerName);
@@ -67,7 +71,26 @@ public class DefaultPlugin extends JavaPlugin {
     }
 
     /**
+     * Changes the type of a block placed by a player
+     *
+     * @param playerName the name of the player that placed the block
+     * @param x          x position of the block in question
+     * @param y          y position of the block in question
+     * @param z          z position of the block in question
+     * @param type       the new type the block will turn into
+     */
+    public void setBlockIndestructible(String playerName, int x, int y, int z, String type) {
+        Player player = getServer().getPlayer(playerName);
+        World world = player.getWorld();
+        Material material = Material.getMaterial(type);
+        if (material != null) {
+            world.getBlockAt(x, y, z).setType(material);
+        }
+    }
+
+    /**
      * Will kick a player from the server in ca. 10 minutes.
+     *
      * @param playerName the username of the player
      */
     public void delayedKickPlayer(String playerName) {
@@ -93,11 +116,11 @@ public class DefaultPlugin extends JavaPlugin {
     public void onDisable() {
         // Unload remaining worlds
         List<World> remainingWorlds = getServer().getWorlds();
-        for (World world: remainingWorlds) {
+        for (World world : remainingWorlds) {
             listener.deleteWorld(world);
         }
         // Finish all remaining games
-        for (int gameId: client.getActiveGames().values()) {
+        for (int gameId : client.getActiveGames().values()) {
             client.finishGame(gameId);
         }
 
