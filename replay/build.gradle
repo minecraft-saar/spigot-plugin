@@ -45,8 +45,8 @@ dependencies {
     // MC-Saar-Instruct
     implementation group: "com.google.protobuf", name: "protobuf-java", version: "3.9.0"
     implementation group: "io.grpc", name: "grpc-all", version: "1.23.0"
-    implementation 'com.github.minecraft-saar:shared-resources:f813b9705154ae6115b4abbde1dc38c33be381c5'
-    implementation group: "de.saar.minecraft.infrastructure", name: "broker", version: "1.1.13"
+    implementation 'com.github.minecraft-saar:shared-resources:release-1.1.19'
+    implementation group: "de.saar.minecraft.infrastructure", name: "broker", version: "1.2.3"
     implementation group: "de.saar.minecraft.spigot-plugin", name:"communication", version:"1.1-SNAPSHOT"
 
     // Database

@@ -4,6 +4,9 @@ import com.github.agomezmoron.multimedia.recorder.configuration.VideoRecorderCon
 import de.saar.minecraft.broker.db.tables.records.GamesRecord;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandExecutor;
+import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -27,6 +30,28 @@ public class ReplayPlugin extends JavaPlugin{
     private DSLContext jooq;
     private static Logger logger = LogManager.getLogger(ReplayPlugin.class);
 
+    class SelectDatabaseCommand implements CommandExecutor {
+        @Override
+        public boolean onCommand(CommandSender commandSender, Command command, String s, String[] args) {
+            if (args.length == 0 || args.length > 3) {
+                commandSender.sendMessage("usage: /connect db [user [password]]");
+                return false;
+            }
+            String db = args[0];
+            if (! db.contains(":")) {
+                db = "jdbc:mysql://localhost:3306/" + db;
+            }
+            if (args.length == 1) {
+                connectToDatabase(db, config.getString("user"), config.getString("password"));
+            } else if (args.length == 2) {
+                connectToDatabase(db, args[1], config.getString("password"));
+            } else {
+                connectToDatabase(db, args[1], args[2]);
+            }
+            return true;
+        }
+    }
+
     @Override
     public void onEnable() {
         this.saveDefaultConfig();
@@ -46,6 +71,8 @@ public class ReplayPlugin extends JavaPlugin{
 
         this.getCommand("stopRecording").setExecutor(new StopRecordingCommand(this));
 
+        this.getCommand("connect").setExecutor(new SelectDatabaseCommand());
+
         listener = new ReplayListener(this);
         getServer().getPluginManager().registerEvents(listener, this);
 
@@ -53,7 +80,10 @@ public class ReplayPlugin extends JavaPlugin{
         String url = config.getString("url");
         String user = config.getString("user");
         String password = config.getString("password");
-
+        connectToDatabase(url, user, password);
+    }
+    
+    public void connectToDatabase(String url, String user, String password) {
         Connection conn = null;
         try {
             conn = DriverManager.getConnection(url, user, password);
@@ -66,7 +96,6 @@ public class ReplayPlugin extends JavaPlugin{
                 SQLDialect.valueOf("MYSQL")
         );
         logger.info("Connected to database at {}.", url);
-
     }
 
     public GamesRecord getGame(int gameId) {

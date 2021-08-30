@@ -195,6 +195,9 @@ public class SelectGameCommand implements CommandExecutor {
                 case "TextMessage": {
                     JsonObject object = Json.parse(message).asObject();
                     String text = object.get("text").asString();
+                    if (text.startsWith("{")) {
+                        text = Json.parse(text).asObject().get("message").asString();
+                    }
                     if (direction.equals(GameLogsDirection.PassToClient)) {
                         player.sendMessage(ChatColor.WHITE + text);
                     } else {
