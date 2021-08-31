@@ -20,6 +20,10 @@ If the plugin is recompiled with changes in the original config, this old copy h
 
 run ./start.sh to download and compile and everything except the Minecraft client.
 
+run ./start_replay_server.sh to run the replay MC server.
+
+to reset everything, `rm -rf .setup_complete server replay_server`
+
 ## Manual setup
 
 ### Setting up a spigot server
