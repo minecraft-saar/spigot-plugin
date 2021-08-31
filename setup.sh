@@ -23,7 +23,7 @@ function setup_server {
     java -jar paper.jar
 
     # acknowledge EULA so we can start the server
-    sed -i s/false/true/ eula.txt
+    sed -i="" s/false/true/ eula.txt
     rm -f server.properties
     for f in server.properties bukkit.yml spigot.yml; do
         cp ../server_files/$f .
@@ -50,6 +50,8 @@ cp -R server replay_server
 
 # build our plugins
 (
+    set -e
+    set -u
     cd communication/
     ./gradlew shadowJar
     ./gradlew publishToMavenLocal
@@ -59,6 +61,8 @@ cp -R server replay_server
 
 # copy plugin and configuration files to server directory
 (
+    set -e
+    set -u
     cd server
     # deploy plugin
     mkdir -p plugins
@@ -70,7 +74,7 @@ cp -R server replay_server
     WHITELIST_FILE=~/minecraft-software/whitelist.txt
     if [[ -f $WHITELIST_FILE ]]; then
         while read line; do
-            sed -i "/NotBannedPlayers:/a \ \ $line" CommunicationPlugin/config.yml
+            sed -i="" "/NotBannedPlayers:/a \ \ $line" CommunicationPlugin/config.yml
         done < $WHITELIST_FILE
     fi
     cd ..
@@ -78,9 +82,11 @@ cp -R server replay_server
 )
 
 (
+    set -e
+    set -u
     cd replay_server
     # make the server run on a different port
-    sed -i 's/server-port=25565/server-port=25567/' server.properties
+    sed -i="" 's/server-port=25565/server-port=25567/' server.properties
     mkdir -p plugins
     cd plugins
     ln -s ../../replay/build/libs/replay-*-all.jar .
