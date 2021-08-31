@@ -19,6 +19,7 @@ fixedMaterials:
   - BLACK_WOOL
   - YELLOW_WOOL
   - BLUE_WOOL
+  - STONE_BRICKS
 
 clientPort: 2802
 
@@ -31,6 +32,7 @@ startInventory:
 banPlayers: true
 
 NotBannedPlayers:
+  - Trillian04
   - Minecraft_UdS_1
   - Minecraft_UdS_2
   - Minecraft_UdS_3
