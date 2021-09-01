@@ -80,12 +80,22 @@ public class DefaultPlugin extends JavaPlugin {
      * @param type       the new type the block will turn into
      */
     public void setBlockIndestructible(String playerName, int x, int y, int z, String type) {
-        Player player = getServer().getPlayer(playerName);
-        World world = player.getWorld();
-        Material material = Material.getMaterial(type);
-        if (material != null) {
-            world.getBlockAt(x, y, z).setType(material);
-        }
+        getServer().getScheduler().scheduleSyncDelayedTask(this, new Runnable() {
+            @Override
+            public void run() {
+                Player player = getServer().getPlayer(playerName);
+                assert player != null;
+                World world = player.getWorld();
+                Material material = Material.getMaterial(type);
+                if (material != null) {
+                    Block block = world.getBlockAt(x, y, z);
+                    block.setType(material);
+                    logger.info("Successfully changed block for player {} at position x {} y {} z {} to type {}", playerName, x, y, z, type);
+                }
+            }
+        }, 1L);  // = 20 (ticks per second) * 60 (seconds per minute) * 10 (minutes)
+
+
     }
 
     /**

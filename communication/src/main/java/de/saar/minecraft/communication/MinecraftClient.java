@@ -83,12 +83,14 @@ public class MinecraftClient implements Client {
         synchronized (this) {
             nonblockingStub.getMessageChannel(GameId.newBuilder().setId(gameId).build(), tso);
         }
+        System.err.println("!!!!! obtained message channel");
+        logger.info("obtained message channel");
         synchronized (this) {
             nonblockingStub.getControlChannel(GameId.newBuilder().setId(gameId).build(), cso);
         }
-        System.err.println("!!!!! obtained message channel");
+        System.err.println("!!!!! obtained control channel");
+        logger.info("obtained control channel");
         activeGames.put(playerName, gameId);
-        logger.info("obtained message channel");
         return worldSelect.getName();
     }
 
@@ -191,7 +193,7 @@ public class MinecraftClient implements Client {
 
         @Override
         public void onNext(ProtectBlockMessage value) {
-            // verify that message is sent to correct player
+            // verify that block is being set for correct player
             assert gameId == value.getGameId();
             String playerName = activeGames.getKey(gameId);
             plugin.setBlockIndestructible(playerName, value.getX(), value.getY(), value.getZ(), value.getType());
