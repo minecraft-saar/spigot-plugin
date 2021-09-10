@@ -9,7 +9,7 @@ fixedMaterials:
   - DIRT
   - COARSE_DIRT
   - FARMLAND
-  - GRASS_PATH
+  - DIRT_PATH
 # potentially dangerous
   - TNT
   - LAVA
@@ -27,7 +27,6 @@ worldFilePath: /de/saar/minecraft/worlds/
 
 startInventory:
   - STONE
-  - RED_CONCRETE
 
 banPlayers: true
 
