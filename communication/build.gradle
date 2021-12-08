@@ -52,7 +52,7 @@ dependencies {
     implementation group: "org.apache.commons", name:"commons-collections4", version:"4.1"
     implementation group: "org.apache.logging.log4j", name: "log4j-core", version: "2.8.2"
     implementation group: "commons-io", name: "commons-io", version: "2.5"
-    implementation 'com.github.minecraft-saar:shared-resources:f813b9705154ae6115b4abbde1dc38c33be381c5'
+    implementation 'com.github.minecraft-saar:shared-resources:e9a1bb98308e915a34d5af35f24ee070633e9b0e'
     implementation group: "org.jetbrains", name: "annotations", version: "19.0.0"
 }
 
