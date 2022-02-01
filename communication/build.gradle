@@ -48,7 +48,7 @@ dependencies {
     implementation group: "org.spigotmc", name: "spigot-api", version: "1.15.2-R0.1-SNAPSHOT"
     implementation group: "com.google.protobuf", name: "protobuf-java", version: "3.9.0"
     implementation group: "io.grpc", name: "grpc-all", version: "1.23.0"
-    implementation group: "de.saar.minecraft.infrastructure", name:"networking", version:"1.2.7"
+    implementation group: "de.saar.minecraft.infrastructure", name:"networking", version:"1.2.8"
     implementation group: "org.apache.commons", name:"commons-collections4", version:"4.1"
     implementation group: "org.apache.logging.log4j", name: "log4j-core", version: "2.16.0"
     implementation group: "commons-io", name: "commons-io", version: "2.5"
