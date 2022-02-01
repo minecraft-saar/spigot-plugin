@@ -182,7 +182,7 @@ public class MinecraftListener implements Listener {
 
         // Get correct structure file
         String path = plugin.config.getString("worldFilePath");
-        String filename = Paths.get(path, structureFile + ".csv").toString();
+        String filename = path + structureFile + ".csv";
         InputStream in = MinecraftListener.class.getResourceAsStream(filename);
         World world;
         FlatChunkGenerator generator = new FlatChunkGenerator();
